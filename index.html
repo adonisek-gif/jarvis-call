@@ -132,7 +132,7 @@
 <body>
 
 <div class="header">
-  <div class="badge">🎙️ v4 • Czysty Głos 1.0x • Odporny na Szum Komputera</div>
+  <div class="badge">🔥 v5 • Głos Studyjny Patryk • Eleven Flash 2.5</div>
   <div class="name">Argon Jarvis</div>
   <div class="state" id="stateText">Łączę...</div>
   <div class="timer" id="timerText">00:00</div>
@@ -162,8 +162,8 @@
 
   const hash = new URLSearchParams(location.hash.slice(1));
   const EL_KEY = hash.get("k") || "";
-  // Domyślnie spokojny, naturalny polski głos męski (vEEOzNgW5AZVHnBZA03D)
-  const VOICE_ID = hash.get("v") || "vEEOzNgW5AZVHnBZA03D";
+  // Domyślnie studyjny, naturalny polski głos konwersacyjny PVC (Patryk: TfkrMC39TgmIwxRUP4Bd)
+  const VOICE_ID = hash.get("v") || "TfkrMC39TgmIwxRUP4Bd";
   const IN_TOPIC = hash.get("in") || "";
   const OUT_TOPIC = hash.get("out") || "";
 
@@ -229,7 +229,17 @@
   }
 
   function cleanTextForPolishTTS(text) {
-    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️📞]/g, "").replace(/%/g, " procent").replace(/PLN|zł/gi, " złotych");
+    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️📞📈🔥]/g, "")
+      .replace(/\bpździe\b/gi, "piździe")
+      .replace(/\bffmpegi\b/gi, "procesy wideo")
+      .replace(/\bffmpeg\b/gi, "proces wideo")
+      .replace(/\bprofit\s*sheet\b/gi, "profit szit")
+      .replace(/\badloc\b/gi, "ad-lok")
+      .replace(/\bstudiodermal\b/gi, "studio dermal")
+      .replace(/\bUK\b/g, "ju-kej")
+      .replace(/\bMSL\b/g, "em-es-el")
+      .replace(/%/g, " procent")
+      .replace(/PLN|zł/gi, " złotych");
     s = s.replace(/(\d+)[,.](\d+)/g, (_, a, b) => polishNumToWords(parseInt(a, 10)) + " i " + polishNumToWords(parseInt(b, 10)));
     s = s.replace(/\b\d+\b/g, (m) => polishNumToWords(parseInt(m, 10)));
     return s.trim();
@@ -260,8 +270,14 @@
     timerEl.textContent = mm + ":" + ss;
   }
 
+  let speechQueue = [];
+
   async function speakText(text) {
     if (!inCall) return;
+    if (mode === "speaking" && currentAudio && !currentAudio.paused) {
+      speechQueue.push(text);
+      return;
+    }
     // Zatrzymaj nagrywanie mikrofonu na czas mówienia Jarvisa, żeby NIGDY nie łapał własnego echa z głośnika!
     if (mediaRecorder && mediaRecorder.state === "recording") {
       try { mediaRecorder.onstop = null; mediaRecorder.stop(); } catch (e) {}
@@ -271,7 +287,6 @@
 
     try {
       const ttsInput = cleanTextForPolishTTS(text);
-      // Czysta jakość 44.1kHz, naturalna prędkość 1.0x (zero robotycznego przyspieszania!)
       const url = "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "?output_format=mp3_44100_64&optimize_streaming_latency=2";
       const resp = await fetch(url, {
         method: "POST",
@@ -281,9 +296,9 @@
         },
         body: JSON.stringify({
           text: ttsInput,
-          model_id: "eleven_turbo_v2_5",
+          model_id: "eleven_flash_v2_5",
           language_code: "pl",
-          voice_settings: { stability: 0.55, similarity_boost: 0.80, style: 0.0, use_speaker_boost: true, speed: 1.0 }
+          voice_settings: { stability: 0.50, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 1.0 }
         })
       });
       if (!inCall || mode !== "speaking") return;
@@ -295,6 +310,12 @@
       currentAudio = new Audio(audioUrl);
       currentAudio.onended = () => {
         URL.revokeObjectURL(audioUrl);
+        if (speechQueue.length > 0) {
+          const nextMsg = speechQueue.shift();
+          currentAudio = null;
+          speakText(nextMsg);
+          return;
+        }
         // Odczekaj 220ms po zakończeniu głosu Jarvisa, żeby pogłos w pokoju ucichł zanim włączymy mikrofon
         setTimeout(() => {
           if (inCall && mode === "speaking") startListeningTurn();
