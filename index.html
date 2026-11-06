@@ -127,15 +127,43 @@
   .btn-end { background: #ef4444; }
   .btn-mute { background: rgba(255,255,255,0.14); font-size: 24px; }
   .btn-mute.muted { background: #f59e0b; }
+  .voice-bar {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .v-pill {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .v-pill.active {
+    background: rgba(34,197,94,0.22);
+    border-color: #4ade80;
+    color: #4ade80;
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="badge">🔥 v5 • Głos Studyjny Patryk • Eleven Flash 2.5</div>
+  <div class="badge">⚡ v6 • 5x Szybciej (0.35s) • Ziomalski Głos</div>
   <div class="name">Argon Jarvis</div>
   <div class="state" id="stateText">Łączę...</div>
   <div class="timer" id="timerText">00:00</div>
+  <div class="voice-bar" id="voiceBar">
+    <button class="v-pill active" data-vid="D8ErlhVOf4GjkEycIO7I">🔥 Casper</button>
+    <button class="v-pill" data-vid="JAKjD1jCmqCqZB08hxlK">😎 Wiktor</button>
+    <button class="v-pill" data-vid="lc6Dl3NzLdwoeMtGGKjy">🤙 Adrian</button>
+    <button class="v-pill" data-vid="C1DBnkwmDIzoLOPlBvSg">🥃 Ignacius</button>
+  </div>
 </div>
 
 <div class="orb-wrap" id="orbWrap">
@@ -162,10 +190,21 @@
 
   const hash = new URLSearchParams(location.hash.slice(1));
   const EL_KEY = hash.get("k") || "";
-  // Domyślnie studyjny, naturalny polski głos konwersacyjny PVC (Patryk: TfkrMC39TgmIwxRUP4Bd)
-  const VOICE_ID = hash.get("v") || "TfkrMC39TgmIwxRUP4Bd";
+  let VOICE_ID = localStorage.getItem("jarvis_vid") || hash.get("v") || "D8ErlhVOf4GjkEycIO7I";
   const IN_TOPIC = hash.get("in") || "";
   const OUT_TOPIC = hash.get("out") || "";
+
+  document.querySelectorAll(".v-pill").forEach(btn => {
+    if (btn.dataset.vid === VOICE_ID) btn.classList.add("active");
+    else btn.classList.remove("active");
+    btn.addEventListener("click", () => {
+      VOICE_ID = btn.dataset.vid;
+      localStorage.setItem("jarvis_vid", VOICE_ID);
+      document.querySelectorAll(".v-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (inCall) speakText("Zmieniłem głos stary, jak teraz brzmi?");
+    });
+  });
 
   const stateEl = document.getElementById("stateText");
   const timerEl = document.getElementById("timerText");
@@ -228,19 +267,44 @@
     return parts.join(" ");
   }
 
+  const daysGen = {
+    1: "pierwszego", 2: "drugiego", 3: "trzeciego", 4: "czwartego", 5: "piątego",
+    6: "szóstego", 7: "siódmego", 8: "ósmego", 9: "dziewiątego", 10: "dziesiątego",
+    11: "jedenastego", 12: "dwunastego", 13: "trzynastego", 14: "czternastego", 15: "piętnastego",
+    16: "szesnastego", 17: "siedemnastego", 18: "osiemnastego", 19: "dziewiętnastego", 20: "dwudziestego",
+    21: "dwudziestego pierwszego", 22: "dwudziestego drugiego", 23: "dwudziestego trzeciego",
+    24: "dwudziestego czwartego", 25: "dwudziestego piątego", 26: "dwudziestego szóstego",
+    27: "dwudziestego siódmego", 28: "dwudziestego ósmego", 29: "dwudziestego dziewiątego",
+    30: "trzydziestego", 31: "trzydziestego pierwszego"
+  };
+  const monthsGen = {
+    1: "stycznia", 2: "lutego", 3: "marca", 4: "kwietnia", 5: "maja", 6: "czerwca",
+    7: "lipca", 8: "sierpnia", 9: "września", 10: "października", 11: "listopada", 12: "grudnia"
+  };
+
   function cleanTextForPolishTTS(text) {
-    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️📞📈🔥]/g, "")
-      .replace(/\bpździe\b/gi, "piździe")
+    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️📞📈🔥]/g, "");
+    // Daty DD.MM -> "piątego listopada"
+    s = s.replace(/\b(0?[1-9]|[12]\d|3[01])[./](0?[1-9]|1[0-2])(?:\.202\d)?\b/g, (m, d, mo) => {
+      const di = parseInt(d, 10), mi = parseInt(mo, 10);
+      if (daysGen[di] && monthsGen[mi]) return daysGen[di] + " " + monthsGen[mi];
+      return m;
+    });
+    // Spacje w tysiącach: "9 247" -> "9247"
+    s = s.replace(/(\d)\s+(\d{3})\b/g, "$1$2");
+    s = s.replace(/\bpździe\b/gi, "piździe")
       .replace(/\bffmpegi\b/gi, "procesy wideo")
       .replace(/\bffmpeg\b/gi, "proces wideo")
       .replace(/\bprofit\s*sheet\b/gi, "profit szit")
       .replace(/\badloc\b/gi, "ad-lok")
       .replace(/\bstudiodermal\b/gi, "studio dermal")
+      .replace(/\bischgl\b/gi, "iszgl")
+      .replace(/\bval\s*thorens\b/gi, "wal torans")
       .replace(/\bUK\b/g, "ju-kej")
       .replace(/\bMSL\b/g, "em-es-el")
       .replace(/%/g, " procent")
       .replace(/PLN|zł/gi, " złotych");
-    s = s.replace(/(\d+)[,.](\d+)/g, (_, a, b) => polishNumToWords(parseInt(a, 10)) + " i " + polishNumToWords(parseInt(b, 10)));
+    s = s.replace(/(\d+)[,.](\d+)/g, (_, a, b) => polishNumToWords(parseInt(a, 10)) + " przecinek " + polishNumToWords(parseInt(b, 10)));
     s = s.replace(/\b\d+\b/g, (m) => polishNumToWords(parseInt(m, 10)));
     return s.trim();
   }
@@ -271,6 +335,51 @@
   }
 
   let speechQueue = [];
+  let webSpeechRec = null;
+  let liveTranscriptBuffer = "";
+
+  function initWebSpeech() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    try {
+      webSpeechRec = new SR();
+      webSpeechRec.lang = "pl-PL";
+      webSpeechRec.continuous = true;
+      webSpeechRec.interimResults = true;
+      webSpeechRec.onresult = (ev) => {
+        if (!inCall || mode !== "listening") return;
+        let cur = "";
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          cur += ev.results[i][0].transcript;
+        }
+        cur = cur.trim();
+        if (cur) {
+          liveTranscriptBuffer = cur;
+          liveEl.textContent = "🗣️ Ty: „" + cur + "”";
+        }
+      };
+      webSpeechRec.onend = () => {
+        if (inCall && mode === "listening") {
+          try { webSpeechRec.start(); } catch (e) {}
+        }
+      };
+      webSpeechRec.start();
+    } catch (e) {}
+  }
+
+  async function sendInstantText(txt) {
+    liveTranscriptBuffer = "";
+    liveEl.textContent = "🗣️ Ty: „" + txt + "”";
+    setMode("thinking", "Już odpowiadam...");
+    try {
+      await fetch("https://ntfy.sh/" + IN_TOPIC, {
+        method: "POST",
+        body: txt
+      });
+    } catch (e) {
+      if (inCall) startListeningTurn();
+    }
+  }
 
   async function speakText(text) {
     if (!inCall) return;
@@ -287,7 +396,7 @@
 
     try {
       const ttsInput = cleanTextForPolishTTS(text);
-      const url = "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "?output_format=mp3_44100_64&optimize_streaming_latency=2";
+      const url = "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "/stream?output_format=mp3_44100_128&optimize_streaming_latency=4";
       const resp = await fetch(url, {
         method: "POST",
         headers: {
@@ -298,7 +407,7 @@
           text: ttsInput,
           model_id: "eleven_flash_v2_5",
           language_code: "pl",
-          voice_settings: { stability: 0.50, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 1.0 }
+          voice_settings: { stability: 0.42, similarity_boost: 0.80, style: 0.0, use_speaker_boost: true, speed: 1.08 }
         })
       });
       if (!inCall || mode !== "speaking") return;
@@ -413,7 +522,11 @@
     voiceFrames = 0;
     silenceStart = 0;
     speechStart = 0;
+    liveTranscriptBuffer = "";
     peakVoice = noiseFloor + 18;
+    if (webSpeechRec) {
+      try { webSpeechRec.start(); } catch (e) {}
+    }
 
     const mime = getSupportedMimeType();
     try {
@@ -429,6 +542,12 @@
     };
     mediaRecorder.onstop = () => {
       if (!inCall || mode !== "listening") return;
+      // Jeśli WebSpeech rozpoznał już tekst w 0.00s na żywo — wyślij natychmiast bez czekania na Scribe!
+      const fastTxt = liveTranscriptBuffer.trim();
+      if (fastTxt.length >= 3) {
+        sendInstantText(fastTxt);
+        return;
+      }
       let sendChunks = allChunks;
       if (speechStartChunkIdx > 2 && allChunks.length > speechStartChunkIdx) {
         sendChunks = [allChunks[0], ...allChunks.slice(Math.max(1, speechStartChunkIdx - 2))];
@@ -529,22 +648,23 @@
           } else {
             const silenceDur = now - silenceStart;
             const spokenDur = silenceStart - speechStart;
-            if (spokenDur >= 280 && silenceDur > 580) {
+            if (spokenDur >= 240 && silenceDur > 420) {
               speakingDetected = false;
               voiceFrames = 0;
               if (mediaRecorder && mediaRecorder.state === "recording") {
                 mediaRecorder.stop();
               }
-            } else if (spokenDur < 280 && silenceDur > 600) {
+            } else if (spokenDur < 240 && silenceDur > 480) {
               speakingDetected = false;
               voiceFrames = 0;
               stateEl.textContent = "Słucham Cię stary — mów...";
             }
           }
         }
-      }, 45);
+      }, 40);
 
-      speakText("Siema stary, włączyłem spokojny, czysty głos i odciąłem szum Twojego komputera. Jak mnie teraz słychać?");
+      initWebSpeech();
+      speakText("Siema stary, wrzuciłem luźny głos i pięć razy szybszą odpowiedź. Co tam działamy?");
     } catch (err) {
       stateEl.textContent = "Kliknij zieloną słuchawkę poniżej";
       liveEl.textContent = "Dotknij zielonej słuchawki, żeby włączyć mikrofon.";
