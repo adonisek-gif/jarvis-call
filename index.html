@@ -640,17 +640,11 @@
     };
     mediaRecorder.onstop = () => {
       if (!inCall || mode !== "listening") return;
-      let sendChunks = allChunks;
-      // Utnij ciszę sprzed momentu gdy zacząłeś mówić, zachowując nagłówek kontenera (allChunks[0])
-      if (speechStartChunkIdx > 4 && allChunks.length > speechStartChunkIdx) {
-        sendChunks = [allChunks[0], ...allChunks.slice(Math.max(1, speechStartChunkIdx - 3))];
-      } else if (allChunks.length > 350) {
-        sendChunks = [allChunks[0], ...allChunks.slice(-300)];
-      }
-      const blob = new Blob(sendChunks, { type: actualMime });
+      // NIGDY nie wycinaj środkowych chunków z kontenera WebM/MP4, bo to uszkadza strumień audio dla Scribe!
+      const blob = new Blob(allChunks, { type: actualMime });
       processRecordedBlob(blob, actualMime);
     };
-    mediaRecorder.start(100);
+    mediaRecorder.start(200);
   }
 
   function triggerSendOrInterrupt() {
