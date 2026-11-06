@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Argon Jarvis — Rozmowa na żywo</title>
+<title>Argon Jarvis — Ziomek na linii</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
   body {
     background: radial-gradient(circle at 50% 25%, #162238 0%, #090d16 75%);
     color: #fff;
@@ -16,18 +16,18 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 36px 24px 42px;
+    padding: 32px 20px 38px;
     overflow: hidden;
   }
   .header { text-align: center; }
   .name { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
-  .state { font-size: 16px; color: #7dd3fc; font-weight: 500; min-height: 24px; }
+  .state { font-size: 16px; color: #7dd3fc; font-weight: 600; min-height: 24px; }
   .timer { font-size: 13px; color: #64748b; margin-top: 4px; font-variant-numeric: tabular-nums; }
 
   .orb-wrap {
     position: relative;
-    width: 190px;
-    height: 190px;
+    width: 200px;
+    height: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -38,31 +38,32 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(56,189,248,0.35) 0%, rgba(56,189,248,0) 70%);
+    background: radial-gradient(circle, rgba(56,189,248,0.4) 0%, rgba(56,189,248,0) 70%);
     transform: scale(1);
-    transition: transform 0.08s ease-out;
+    transition: transform 0.06s ease-out;
   }
   .orb-core {
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 126px;
+    height: 126px;
     border-radius: 50%;
     background: linear-gradient(135deg, #0284c7, #2563eb);
-    box-shadow: 0 0 40px rgba(37,99,235,0.6), inset 0 2px 12px rgba(255,255,255,0.35);
+    box-shadow: 0 0 45px rgba(37,99,235,0.65), inset 0 2px 12px rgba(255,255,255,0.35);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 42px;
-    transition: background 0.25s, box-shadow 0.25s;
+    font-size: 44px;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
   }
+  .orb-wrap:active .orb-core { transform: scale(0.93); }
   body.speaking .orb-core {
     background: linear-gradient(135deg, #10b981, #059669);
-    box-shadow: 0 0 50px rgba(16,185,129,0.7), inset 0 2px 12px rgba(255,255,255,0.4);
+    box-shadow: 0 0 55px rgba(16,185,129,0.75), inset 0 2px 12px rgba(255,255,255,0.4);
   }
   body.thinking .orb-core {
     background: linear-gradient(135deg, #f59e0b, #d97706);
-    box-shadow: 0 0 45px rgba(245,158,11,0.6);
-    animation: pulseThink 1.1s infinite alternate;
+    box-shadow: 0 0 45px rgba(245,158,11,0.65);
+    animation: pulseThink 0.75s infinite alternate;
   }
   @keyframes pulseThink {
     from { transform: scale(0.94); }
@@ -71,20 +72,20 @@
 
   .transcript-box {
     width: 100%;
-    max-width: 380px;
-    min-height: 92px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
+    max-width: 390px;
+    min-height: 104px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 18px;
     padding: 14px 16px;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.45;
-    color: #e2e8f0;
+    color: #f1f5f9;
     text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     backdrop-filter: blur(10px);
   }
   .sub-hint { font-size: 12px; color: #94a3b8; }
@@ -119,18 +120,18 @@
 
 <div class="header">
   <div class="name">Argon Jarvis</div>
-  <div class="state" id="stateText">Kliknij zieloną słuchawkę, aby połączyć</div>
+  <div class="state" id="stateText">Łączę...</div>
   <div class="timer" id="timerText">00:00</div>
 </div>
 
-<div class="orb-wrap" id="orbWrap" title="Dotknij kuli, aby od razu wysłać zdanie">
+<div class="orb-wrap" id="orbWrap">
   <div class="orb-ring" id="orbRing"></div>
   <div class="orb-core" id="orbCore">🎙️</div>
 </div>
 
 <div class="transcript-box">
-  <div id="liveText">Rozmowa głośnomówiąca na żywo — mów normalnie, gdy skończysz zdanie Jarvis od razu odpowie.</div>
-  <div class="sub-hint" id="hintText">Na głośnej ulicy możesz też dotknąć niebieskiej kuli po zdaniu</div>
+  <div id="liveText">Gadaj normalnie jak z ziomkiem — jak mówisz gdy ja gadam (albo dotkniesz kuli), od razu się przymykam i słucham.</div>
+  <div class="sub-hint" id="hintText">Dotknij kuli w dowolnym momencie, żeby od razu wysłać lub przerwać</div>
 </div>
 
 <div class="controls">
@@ -147,7 +148,8 @@
 
   const hash = new URLSearchParams(location.hash.slice(1));
   const EL_KEY = hash.get("k") || "";
-  const VOICE_ID = hash.get("v") || "lc6Dl3NzLdwoeMtGGKjy";
+  // Domyślnie polski głos "polish ugc 1" (hUoarWcuDA1jiaKavjf4)
+  const VOICE_ID = hash.get("v") || "hUoarWcuDA1jiaKavjf4";
   const IN_TOPIC = hash.get("in") || "";
   const OUT_TOPIC = hash.get("out") || "";
 
@@ -169,12 +171,54 @@
   let chunks = [];
   let speakingDetected = false;
   let silenceStart = 0;
-  let recordStart = 0;
+  let speechStart = 0;
   let sse = null;
   let currentAudio = null;
   let callStartTime = 0;
   let timerInterval = null;
   let vadInterval = null;
+  let bargeInFrames = 0;
+
+  // Zamiana liczb na polskie słowa po stronie klienta (żeby lektor nigdy nie czytał cyfr po angielsku)
+  function polishNumToWords(n) {
+    n = Math.round(n);
+    if (n === 0) return "zero";
+    const jed = ["", "jeden", "dwa", "trzy", "cztery", "pięć", "sześć", "siedem", "osiem", "dziewięć"];
+    const nascie = ["dziesięć", "jedenaście", "dwanaście", "trzynaście", "czternaście", "piętnaście", "szesnaście", "siedemnaście", "osiemnaście", "dziewiętnaście"];
+    const dzies = ["", "dziesięć", "dwadzieścia", "trzydzieści", "czterdzieści", "pięćdziesiąt", "sześćdziesiąt", "siedemdziesiąt", "osiemdziesiąt", "dziewięćdziesiąt"];
+    const setki = ["", "sto", "dwieście", "trzysta", "czterysta", "pięćset", "sześćset", "siedemset", "osiemset", "dziewięćset"];
+
+    function under1000(x) {
+      let out = [];
+      if (x >= 100) { out.push(setki[Math.floor(x / 100)]); x %= 100; }
+      if (x >= 10 && x <= 19) { out.push(nascie[x - 10]); }
+      else {
+        if (x >= 20) { out.push(dzies[Math.floor(x / 10)]); x %= 10; }
+        if (x > 0) out.push(jed[x]);
+      }
+      return out.join(" ");
+    }
+
+    let parts = [];
+    if (n >= 1000) {
+      const th = Math.floor(n / 1000);
+      n %= 1000;
+      if (th === 1) parts.push("tysiąc");
+      else if (th % 10 >= 2 && th % 10 <= 4 && (th % 100 < 10 || th % 100 >= 20)) parts.push(under1000(th) + " tysiące");
+      else parts.push(under1000(th) + " tysięcy");
+    }
+    if (n > 0) parts.push(under1000(n));
+    return parts.join(" ");
+  }
+
+  function cleanTextForPolishTTS(text) {
+    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️]/g, "").replace(/%/g, " procent").replace(/PLN|zł/gi, " złotych");
+    // Liczby dziesiętne np. 13,9 lub 13.9 -> trzynaście przecinek dziewięć
+    s = s.replace(/(\d+)[,.](\d+)/g, (_, a, b) => polishNumToWords(parseInt(a, 10)) + " i " + polishNumToWords(parseInt(b, 10)));
+    // Liczby całkowite
+    s = s.replace(/\b\d+\b/g, (m) => polishNumToWords(parseInt(m, 10)));
+    return s.trim();
+  }
 
   function setMode(m, label) {
     mode = m;
@@ -195,33 +239,36 @@
 
   async function speakText(text) {
     if (!inCall) return;
-    setMode("speaking", "Jarvis mówi...");
+    setMode("speaking", "Jarvis mówi (zacznij mówić, by przerwać)");
     liveEl.textContent = "🤖 " + text;
+    bargeInFrames = 0;
 
     try {
-      const clean = text.replace(/[•🟢⚡✅🔊]/g, "").trim();
-      const resp = await fetch("https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "?output_format=mp3_44100_64", {
+      const ttsInput = cleanTextForPolishTTS(text);
+      const url = "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "?output_format=mp3_44100_64&optimize_streaming_latency=3";
+      const resp = await fetch(url, {
         method: "POST",
         headers: {
           "xi-api-key": EL_KEY,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          text: clean,
-          model_id: "eleven_flash_v2_5",
+          text: ttsInput,
+          model_id: "eleven_turbo_v2_5",
           language_code: "pl",
-          voice_settings: { stability: 0.45, similarity_boost: 0.8, speed: 1.06 }
+          voice_settings: { stability: 0.42, similarity_boost: 0.85, speed: 1.08 }
         })
       });
+      if (!inCall || mode !== "speaking") return;
       const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
+      const audioUrl = URL.createObjectURL(blob);
       if (currentAudio) {
         currentAudio.pause();
       }
-      currentAudio = new Audio(url);
+      currentAudio = new Audio(audioUrl);
       currentAudio.onended = () => {
-        URL.revokeObjectURL(url);
-        if (inCall) startListeningTurn();
+        URL.revokeObjectURL(audioUrl);
+        if (inCall && mode === "speaking") startListeningTurn();
       };
       currentAudio.onerror = () => {
         if (inCall) startListeningTurn();
@@ -246,17 +293,40 @@
     };
   }
 
-  async function processRecordedBlob(blob) {
-    if (!inCall || blob.size < 1200) {
+  async function sendTextToJarvis(txt) {
+    txt = (txt || "").trim();
+    if (!txt || txt.length < 2) {
       if (inCall) startListeningTurn();
       return;
     }
-    setMode("thinking", "Rozpoznaję i działam...");
+    liveEl.textContent = "🗣️ Ty: „" + txt + "”";
+    setMode("thinking", "Już odpowiadam...");
     try {
+      await fetch("https://ntfy.sh/" + IN_TOPIC, {
+        method: "POST",
+        body: txt
+      });
+    } catch (e) {
+      if (inCall) setTimeout(startListeningTurn, 1000);
+    }
+  }
+
+  async function processRecordedBlob(blob, mime) {
+    if (!inCall || blob.size < 800) {
+      if (inCall) startListeningTurn();
+      return;
+    }
+    setMode("thinking", "Łapię co mówisz...");
+    try {
+      let ext = "webm";
+      if (mime.includes("mp4") || mime.includes("aac") || mime.includes("m4a")) ext = "mp4";
+      else if (mime.includes("ogg")) ext = "ogg";
+      else if (mime.includes("wav")) ext = "wav";
+
       const fd = new FormData();
       fd.append("model_id", "scribe_v1");
       fd.append("language_code", "pl");
-      fd.append("file", blob, "voice.webm");
+      fd.append("file", blob, "voice." + ext);
 
       const r = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
         method: "POST",
@@ -265,59 +335,63 @@
       });
       const j = await r.json();
       const txt = (j.text || "").trim();
-      if (!txt || txt.length < 2) {
-        if (inCall) startListeningTurn();
-        return;
-      }
-      liveEl.textContent = "🗣️ Ty: „" + txt + "”";
-      setMode("thinking", "Jarvis sprawdza na Macu...");
-
-      await fetch("https://ntfy.sh/" + IN_TOPIC, {
-        method: "POST",
-        body: txt
-      });
+      await sendTextToJarvis(txt);
     } catch (e) {
-      liveEl.textContent = "Błąd sieci — próbuję dalej...";
-      if (inCall) setTimeout(startListeningTurn, 1200);
+      if (inCall) startListeningTurn();
     }
+  }
+
+  function getSupportedMimeType() {
+    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+    for (const t of types) {
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
+        return t;
+      }
+    }
+    return "";
   }
 
   function startListeningTurn() {
     if (!inCall || !mediaStream) return;
-    setMode("listening", isMuted ? "Mikrofon wyciszony" : "Słucham Cię — mów normalnie...");
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+    setMode("listening", isMuted ? "Mikrofon wyciszony" : "Słucham Cię stary — mów...");
     chunks = [];
     speakingDetected = false;
     silenceStart = 0;
-    recordStart = Date.now();
+    speechStart = 0;
 
+    const mime = getSupportedMimeType();
     try {
-      mediaRecorder = new MediaRecorder(mediaStream);
+      mediaRecorder = mime ? new MediaRecorder(mediaStream, { mimeType: mime }) : new MediaRecorder(mediaStream);
     } catch (e) {
       mediaRecorder = new MediaRecorder(mediaStream);
     }
+    const actualMime = mediaRecorder.mimeType || mime || "audio/mp4";
     mediaRecorder.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) chunks.push(e.data);
     };
     mediaRecorder.onstop = () => {
       if (!inCall || mode !== "listening") return;
-      const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
-      processRecordedBlob(blob);
+      const blob = new Blob(chunks, { type: actualMime });
+      processRecordedBlob(blob, actualMime);
     };
-    mediaRecorder.start(200);
+    mediaRecorder.start(150);
   }
 
-  function finishCurrentSentenceNow() {
-    if (mode === "listening" && mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-    } else if (mode === "speaking" && currentAudio) {
-      // Pozwól przerwać Jarvisowi w pół słowa!
-      currentAudio.pause();
+  function interruptOrSendNow() {
+    if (mode === "speaking") {
+      if (currentAudio) currentAudio.pause();
       startListeningTurn();
+    } else if (mode === "listening" && mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
     }
   }
 
   orbWrap.addEventListener("click", () => {
-    if (inCall) finishCurrentSentenceNow();
+    if (inCall) interruptOrSendNow();
   });
 
   async function startCall() {
@@ -342,48 +416,74 @@
       connectSSE();
 
       vadInterval = setInterval(() => {
-        if (!inCall || mode !== "listening" || isMuted) {
+        if (!inCall || isMuted) {
           orbRing.style.transform = "scale(1)";
           return;
         }
         analyser.getByteFrequencyData(dataArr);
         let sum = 0;
-        for (let i = 2; i < 60; i++) sum += dataArr[i];
-        const avg = sum / 58;
-        const scale = Math.min(1.65, 1 + avg / 95);
+        for (let i = 2; i < 55; i++) sum += dataArr[i];
+        const avg = sum / 53;
+        const scale = Math.min(1.75, 1 + avg / 75);
         orbRing.style.transform = "scale(" + scale.toFixed(2) + ")";
 
         const now = Date.now();
-        if (avg > 22) {
+
+        // BARGE-IN: Jeśli Jarvis mówi, a Ty zaczynasz głośno mówić -> natychmiast przerwij Jarvisowi i słuchaj Ciebie!
+        if (mode === "speaking") {
+          if (avg > 28) {
+            bargeInFrames++;
+            if (bargeInFrames >= 4) {
+              bargeInFrames = 0;
+              if (currentAudio) currentAudio.pause();
+              startListeningTurn();
+              speakingDetected = true;
+              speechStart = now;
+              silenceStart = now;
+            }
+          } else {
+            bargeInFrames = Math.max(0, bargeInFrames - 1);
+          }
+          return;
+        }
+
+        if (mode !== "listening") return;
+
+        // Czuły próg mowy (avg > 9), żeby zawsze łapało każde Twoje słowo
+        if (avg > 9) {
           if (!speakingDetected) {
             speakingDetected = true;
+            speechStart = now;
             stateEl.textContent = "Słyszę Cię...";
           }
           silenceStart = now;
-        } else if (speakingDetected && silenceStart > 0 && (now - silenceStart > 750)) {
-          // 0.75s ciszy po wypowiedzi -> błyskawicznie wyślij!
-          speakingDetected = false;
-          if (mediaRecorder && mediaRecorder.state === "recording") {
-            mediaRecorder.stop();
+        } else if (speakingDetected && silenceStart > 0) {
+          const spokenDur = silenceStart - speechStart;
+          const silenceDur = now - silenceStart;
+          // Minimum 300ms mowy i 700ms ciszy po zdaniu -> wyślij!
+          if (spokenDur >= 250 && silenceDur > 700) {
+            speakingDetected = false;
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+              mediaRecorder.stop();
+            }
+          } else if (spokenDur < 250 && silenceDur > 900) {
+            // Krótki stuk/oddech — zignoruj i słuchaj dalej
+            speakingDetected = false;
+            stateEl.textContent = "Słucham Cię stary — mów...";
           }
         }
-      }, 50);
+      }, 45);
 
-      speakText("Jestem. Co tam?");
+      speakText("Siema stary, jestem na linii. Co tam działamy?");
     } catch (err) {
-      stateEl.textContent = "Dotknij zielonej słuchawki, aby włączyć mikrofon";
-      liveEl.textContent = "Kliknij zieloną słuchawkę poniżej, żeby połączyć.";
+      stateEl.textContent = "Kliknij zieloną słuchawkę poniżej";
+      liveEl.textContent = "Dotknij zielonej słuchawki, żeby włączyć mikrofon.";
     }
   }
 
-  // Automatyczny start połączenia od razu po otwarciu okna!
-  setTimeout(() => {
-    if (!inCall) startCall();
-  }, 150);
-
   function endCall() {
     inCall = false;
-    setMode("idle", "Połączenie zakończone");
+    setMode("idle", "Rozłączono");
     if (timerInterval) clearInterval(timerInterval);
     if (vadInterval) clearInterval(vadInterval);
     if (sse) sse.close();
@@ -409,9 +509,13 @@
     muteBtn.classList.toggle("muted", isMuted);
     muteBtn.textContent = isMuted ? "🔇" : "🎤";
     if (mode === "listening") {
-      stateEl.textContent = isMuted ? "Mikrofon wyciszony" : "Słucham Cię — mów normalnie...";
+      stateEl.textContent = isMuted ? "Mikrofon wyciszony" : "Słucham Cię stary — mów...";
     }
   });
+
+  setTimeout(() => {
+    if (!inCall) startCall();
+  }, 120);
 })();
 </script>
 </body>
