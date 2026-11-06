@@ -335,51 +335,6 @@
   }
 
   let speechQueue = [];
-  let webSpeechRec = null;
-  let liveTranscriptBuffer = "";
-
-  function initWebSpeech() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-    try {
-      webSpeechRec = new SR();
-      webSpeechRec.lang = "pl-PL";
-      webSpeechRec.continuous = true;
-      webSpeechRec.interimResults = true;
-      webSpeechRec.onresult = (ev) => {
-        if (!inCall || mode !== "listening") return;
-        let cur = "";
-        for (let i = ev.resultIndex; i < ev.results.length; i++) {
-          cur += ev.results[i][0].transcript;
-        }
-        cur = cur.trim();
-        if (cur) {
-          liveTranscriptBuffer = cur;
-          liveEl.textContent = "🗣️ Ty: „" + cur + "”";
-        }
-      };
-      webSpeechRec.onend = () => {
-        if (inCall && mode === "listening") {
-          try { webSpeechRec.start(); } catch (e) {}
-        }
-      };
-      webSpeechRec.start();
-    } catch (e) {}
-  }
-
-  async function sendInstantText(txt) {
-    liveTranscriptBuffer = "";
-    liveEl.textContent = "🗣️ Ty: „" + txt + "”";
-    setMode("thinking", "Już odpowiadam...");
-    try {
-      await fetch("https://ntfy.sh/" + IN_TOPIC, {
-        method: "POST",
-        body: txt
-      });
-    } catch (e) {
-      if (inCall) startListeningTurn();
-    }
-  }
 
   async function speakText(text) {
     if (!inCall) return;
@@ -522,15 +477,12 @@
     voiceFrames = 0;
     silenceStart = 0;
     speechStart = 0;
-    liveTranscriptBuffer = "";
     peakVoice = noiseFloor + 18;
-    if (webSpeechRec) {
-      try { webSpeechRec.start(); } catch (e) {}
-    }
 
     const mime = getSupportedMimeType();
     try {
-      mediaRecorder = mime ? new MediaRecorder(mediaStream, { mimeType: mime }) : new MediaRecorder(mediaStream);
+      const opts = mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 };
+      mediaRecorder = new MediaRecorder(mediaStream, opts);
     } catch (e) {
       mediaRecorder = new MediaRecorder(mediaStream);
     }
@@ -542,12 +494,6 @@
     };
     mediaRecorder.onstop = () => {
       if (!inCall || mode !== "listening") return;
-      // Jeśli WebSpeech rozpoznał już tekst w 0.00s na żywo — wyślij natychmiast bez czekania na Scribe!
-      const fastTxt = liveTranscriptBuffer.trim();
-      if (fastTxt.length >= 3) {
-        sendInstantText(fastTxt);
-        return;
-      }
       let sendChunks = allChunks;
       if (speechStartChunkIdx > 2 && allChunks.length > speechStartChunkIdx) {
         sendChunks = [allChunks[0], ...allChunks.slice(Math.max(1, speechStartChunkIdx - 2))];
@@ -555,7 +501,7 @@
       const blob = new Blob(sendChunks, { type: actualMime });
       processRecordedBlob(blob, actualMime);
     };
-    mediaRecorder.start(120);
+    mediaRecorder.start(100);
   }
 
   function interruptOrSendNow() {
@@ -663,7 +609,6 @@
         }
       }, 40);
 
-      initWebSpeech();
       speakText("Siema stary, wrzuciłem luźny głos i pięć razy szybszą odpowiedź. Co tam działamy?");
     } catch (err) {
       stateEl.textContent = "Kliknij zieloną słuchawkę poniżej";
