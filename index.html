@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Argon Jarvis — Ziomek Live v4</title>
+<title>Argon Jarvis — Telefon na Żywo v7</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
   body {
-    background: radial-gradient(circle at 50% 25%, #162238 0%, #090d16 75%);
+    background: radial-gradient(circle at 50% 22%, #162238 0%, #090d16 78%);
     color: #fff;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Roboto, sans-serif;
     height: 100vh;
@@ -16,125 +16,41 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 28px 20px 36px;
+    padding: 20px 18px 28px;
     overflow: hidden;
   }
-  .header { text-align: center; }
+  .header { text-align: center; width: 100%; max-width: 410px; }
   .badge {
     display: inline-block;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    background: rgba(56,189,248,0.2);
-    color: #38bdf8;
-    border: 1px solid rgba(56,189,248,0.45);
+    letter-spacing: 0.7px;
+    background: rgba(16,185,129,0.18);
+    color: #34d399;
+    border: 1px solid rgba(16,185,129,0.45);
     padding: 3px 10px;
     border-radius: 99px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
-  .name { font-size: 27px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 5px; }
-  .state { font-size: 16px; color: #7dd3fc; font-weight: 600; min-height: 24px; }
-  .timer { font-size: 13px; color: #64748b; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .name { font-size: 25px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 3px; }
+  .state { font-size: 15px; color: #7dd3fc; font-weight: 600; min-height: 22px; }
+  .timer { font-size: 12px; color: #64748b; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
-  .orb-wrap {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-  .orb-ring {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(56,189,248,0.4) 0%, rgba(56,189,248,0) 70%);
-    transform: scale(1);
-    transition: transform 0.06s ease-out;
-  }
-  .orb-core {
-    position: relative;
-    width: 126px;
-    height: 126px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0284c7, #2563eb);
-    box-shadow: 0 0 45px rgba(37,99,235,0.65), inset 0 2px 12px rgba(255,255,255,0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 44px;
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-  }
-  .orb-wrap:active .orb-core { transform: scale(0.93); }
-  body.speaking .orb-core {
-    background: linear-gradient(135deg, #10b981, #059669);
-    box-shadow: 0 0 55px rgba(16,185,129,0.75), inset 0 2px 12px rgba(255,255,255,0.4);
-  }
-  body.thinking .orb-core {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    box-shadow: 0 0 45px rgba(245,158,11,0.65);
-    animation: pulseThink 0.6s infinite alternate;
-  }
-  @keyframes pulseThink {
-    from { transform: scale(0.94); }
-    to { transform: scale(1.06); }
-  }
-
-  .transcript-box {
-    width: 100%;
-    max-width: 390px;
-    min-height: 104px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 18px;
-    padding: 14px 16px;
-    font-size: 16px;
-    line-height: 1.45;
-    color: #f1f5f9;
-    text-align: center;
+  .top-bars {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 8px;
-    backdrop-filter: blur(10px);
-  }
-  .sub-hint { font-size: 12px; color: #94a3b8; }
-
-  .controls {
-    display: flex;
-    gap: 28px;
-    align-items: center;
-  }
-  .btn {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    transition: transform 0.12s;
-  }
-  .btn:active { transform: scale(0.92); }
-  .btn-start { background: #22c55e; width: 84px; height: 84px; font-size: 34px; }
-  .btn-end { background: #ef4444; }
-  .btn-mute { background: rgba(255,255,255,0.14); font-size: 24px; }
-  .btn-mute.muted { background: #f59e0b; }
-  .voice-bar {
-    display: flex;
     gap: 6px;
     margin-top: 8px;
+    align-items: center;
+  }
+  .voice-bar, .mode-bar {
+    display: flex;
+    gap: 6px;
     flex-wrap: wrap;
     justify-content: center;
   }
-  .v-pill {
+  .v-pill, .m-pill {
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.16);
     color: #cbd5e1;
@@ -149,31 +65,187 @@
     border-color: #4ade80;
     color: #4ade80;
   }
+  .m-pill.active {
+    background: rgba(56,189,248,0.22);
+    border-color: #38bdf8;
+    color: #38bdf8;
+  }
+
+  .orb-wrap {
+    position: relative;
+    width: 176px;
+    height: 176px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .orb-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.42) 0%, rgba(56,189,248,0) 70%);
+    transform: scale(1);
+    transition: transform 0.06s ease-out;
+  }
+  .orb-core {
+    position: relative;
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0284c7, #2563eb);
+    box-shadow: 0 0 42px rgba(37,99,235,0.65), inset 0 2px 12px rgba(255,255,255,0.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  }
+  .orb-sub {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-top: 3px;
+    color: rgba(255,255,255,0.9);
+  }
+  .orb-wrap:active .orb-core { transform: scale(0.92); }
+  body.speaking .orb-core {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 0 55px rgba(16,185,129,0.75), inset 0 2px 12px rgba(255,255,255,0.4);
+  }
+  body.thinking .orb-core {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 0 45px rgba(245,158,11,0.65);
+    animation: pulseThink 0.6s infinite alternate;
+  }
+  @keyframes pulseThink {
+    from { transform: scale(0.94); }
+    to { transform: scale(1.06); }
+  }
+
+  .middle-stack {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .send-now-btn {
+    width: 100%;
+    padding: 15px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(74,222,128,0.55);
+    background: linear-gradient(135deg, #16a34a, #059669);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(22,163,74,0.45);
+    transition: transform 0.1s, opacity 0.15s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .send-now-btn:active { transform: scale(0.96); }
+  .send-now-btn.interrupt {
+    background: linear-gradient(135deg, #0284c7, #2563eb);
+    border-color: rgba(56,189,248,0.55);
+    box-shadow: 0 8px 25px rgba(2,132,199,0.4);
+  }
+  .send-now-btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .transcript-box {
+    width: 100%;
+    min-height: 92px;
+    max-height: 145px;
+    overflow-y: auto;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 12px 15px;
+    font-size: 14.5px;
+    line-height: 1.42;
+    color: #f1f5f9;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    backdrop-filter: blur(10px);
+  }
+  .sub-hint { font-size: 11.5px; color: #94a3b8; }
+
+  .controls {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .btn {
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    transition: transform 0.12s;
+  }
+  .btn:active { transform: scale(0.92); }
+  .btn-start { background: #22c55e; width: 76px; height: 76px; font-size: 32px; }
+  .btn-end { background: #ef4444; }
+  .btn-mute { background: rgba(255,255,255,0.14); font-size: 22px; }
+  .btn-mute.muted { background: #f59e0b; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="badge">⚡ v6 • 5x Szybciej (0.35s) • Ziomalski Głos</div>
+  <div class="badge">⚡ v7 • Zero Zakłóceń Tła • Bezpośredni Mózg 0.7s</div>
   <div class="name">Argon Jarvis</div>
   <div class="state" id="stateText">Łączę...</div>
   <div class="timer" id="timerText">00:00</div>
-  <div class="voice-bar" id="voiceBar">
-    <button class="v-pill active" data-vid="D8ErlhVOf4GjkEycIO7I">🔥 Casper</button>
-    <button class="v-pill" data-vid="JAKjD1jCmqCqZB08hxlK">😎 Wiktor</button>
-    <button class="v-pill" data-vid="lc6Dl3NzLdwoeMtGGKjy">🤙 Adrian</button>
-    <button class="v-pill" data-vid="C1DBnkwmDIzoLOPlBvSg">🥃 Ignacius</button>
+  <div class="top-bars">
+    <div class="mode-bar" id="modeBar">
+      <button class="m-pill active" data-mode="manual">👆 Wyślij kliknięciem (Zero błędów tła)</button>
+      <button class="m-pill" data-mode="auto">🎙️ Auto po ciszy</button>
+    </div>
+    <div class="voice-bar" id="voiceBar">
+      <button class="v-pill active" data-vid="D8ErlhVOf4GjkEycIO7I">🔥 Casper</button>
+      <button class="v-pill" data-vid="JAKjD1jCmqCqZB08hxlK">😎 Wiktor</button>
+      <button class="v-pill" data-vid="lc6Dl3NzLdwoeMtGGKjy">🤙 Adrian</button>
+      <button class="v-pill" data-vid="C1DBnkwmDIzoLOPlBvSg">🥃 Ignacius</button>
+    </div>
   </div>
 </div>
 
 <div class="orb-wrap" id="orbWrap">
   <div class="orb-ring" id="orbRing"></div>
-  <div class="orb-core" id="orbCore">🎙️</div>
+  <div class="orb-core" id="orbCore">
+    <span id="orbIcon">🎙️</span>
+    <span class="orb-sub" id="orbSub">WYŚLIJ</span>
+  </div>
 </div>
 
-<div class="transcript-box">
-  <div id="liveText">Gadaj normalnie — szum wentylatorów i echo głośnika są całkowicie odcięte.</div>
-  <div class="sub-hint" id="hintText">Dotknij kuli w dowolnej chwili, aby od razu wysłać zdanie lub przerwać</div>
+<div class="middle-stack">
+  <button class="send-now-btn" id="sendNowBtn">✅ Skończyłem mówić — Wyślij teraz (lub Spacja)</button>
+  <div class="transcript-box">
+    <div id="liveText">Połączono. Mów śmiało, a gdy skończysz zdanie — kliknij zielony przycisk powyżej lub kulę.</div>
+    <div class="sub-hint" id="hintText">Hałas z otoczenia i wentylatorów nigdy nie przerwie Ci wypowiedzi.</div>
+  </div>
 </div>
 
 <div class="controls">
@@ -191,6 +263,7 @@
   const hash = new URLSearchParams(location.hash.slice(1));
   const EL_KEY = hash.get("k") || "";
   let VOICE_ID = localStorage.getItem("jarvis_vid") || hash.get("v") || "D8ErlhVOf4GjkEycIO7I";
+  let SEND_MODE = localStorage.getItem("jarvis_send_mode") || "manual"; // Domyślnie manual: zero fałszywych wykryć hałasu!
   const IN_TOPIC = hash.get("in") || "";
   const OUT_TOPIC = hash.get("out") || "";
 
@@ -202,16 +275,30 @@
       localStorage.setItem("jarvis_vid", VOICE_ID);
       document.querySelectorAll(".v-pill").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      if (inCall) speakText("Zmieniłem głos stary, jak teraz brzmi?");
+    });
+  });
+
+  document.querySelectorAll(".m-pill").forEach(btn => {
+    if (btn.dataset.mode === SEND_MODE) btn.classList.add("active");
+    else btn.classList.remove("active");
+    btn.addEventListener("click", () => {
+      SEND_MODE = btn.dataset.mode;
+      localStorage.setItem("jarvis_send_mode", SEND_MODE);
+      document.querySelectorAll(".m-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateActionUI();
     });
   });
 
   const stateEl = document.getElementById("stateText");
   const timerEl = document.getElementById("timerText");
   const liveEl = document.getElementById("liveText");
+  const hintEl = document.getElementById("hintText");
   const orbRing = document.getElementById("orbRing");
-  const orbCore = document.getElementById("orbCore");
+  const orbIcon = document.getElementById("orbIcon");
+  const orbSub = document.getElementById("orbSub");
   const orbWrap = document.getElementById("orbWrap");
+  const sendNowBtn = document.getElementById("sendNowBtn");
   const callBtn = document.getElementById("callBtn");
   const muteBtn = document.getElementById("muteBtn");
 
@@ -228,13 +315,32 @@
   let silenceStart = 0;
   let speechStart = 0;
   let noiseFloor = 22;
-  let peakVoice = 35;
+  let peakVoice = 38;
   let sse = null;
   let currentAudio = null;
   let callStartTime = 0;
   let timerInterval = null;
   let vadInterval = null;
   let thinkingTimer = null;
+  let lastSpokenMsg = "";
+  let lastSpokenAt = 0;
+
+  function playReadyBeep() {
+    try {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(680, audioCtx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    } catch (e) {}
+  }
 
   function polishNumToWords(n) {
     n = Math.round(n);
@@ -283,17 +389,14 @@
   };
 
   function cleanTextForPolishTTS(text) {
-    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️📞📈🔥]/g, "");
-    // Daty DD.MM -> "piątego listopada"
+    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️📞📈🔥📋\*`_#]/g, "");
     s = s.replace(/\b(0?[1-9]|[12]\d|3[01])[./](0?[1-9]|1[0-2])(?:\.202\d)?\b/g, (m, d, mo) => {
       const di = parseInt(d, 10), mi = parseInt(mo, 10);
       if (daysGen[di] && monthsGen[mi]) return daysGen[di] + " " + monthsGen[mi];
       return m;
     });
-    // Spacje w tysiącach: "9 247" -> "9247"
     s = s.replace(/(\d)\s+(\d{3})\b/g, "$1$2");
-    s = s.replace(/\bpździe\b/gi, "piździe")
-      .replace(/\bffmpegi\b/gi, "procesy wideo")
+    s = s.replace(/\bffmpegi\b/gi, "procesy wideo")
       .replace(/\bffmpeg\b/gi, "proces wideo")
       .replace(/\bprofit\s*sheet\b/gi, "profit szit")
       .replace(/\badloc\b/gi, "ad-lok")
@@ -309,6 +412,33 @@
     return s.trim();
   }
 
+  function updateActionUI() {
+    if (!inCall) {
+      sendNowBtn.className = "send-now-btn disabled";
+      sendNowBtn.textContent = "📞 Kliknij zieloną słuchawkę poniżej";
+      return;
+    }
+    if (mode === "listening") {
+      sendNowBtn.className = "send-now-btn";
+      sendNowBtn.textContent = "✅ Skończyłem mówić — Wyślij teraz (lub Spacja)";
+      orbIcon.textContent = "🎙️";
+      orbSub.textContent = "WYŚLIJ";
+      hintEl.textContent = SEND_MODE === "manual"
+        ? "Tryb bez zakłóceń: mów dowolnie długo i kliknij zielony przycisk (lub Spację), by wysłać."
+        : "Tryb auto: wyśle po ciszy lub od razu po kliknięciu zielonego przycisku.";
+    } else if (mode === "thinking") {
+      sendNowBtn.className = "send-now-btn disabled";
+      sendNowBtn.textContent = "⚡ Jarvis przygotowuje odpowiedź...";
+      orbIcon.textContent = "⚡";
+      orbSub.textContent = "MYŚLĘ";
+    } else if (mode === "speaking") {
+      sendNowBtn.className = "send-now-btn interrupt";
+      sendNowBtn.textContent = "✋ Przerwij Jarvisowi i mów teraz";
+      orbIcon.textContent = "🔊";
+      orbSub.textContent = "PRZERWIJ";
+    }
+  }
+
   function setMode(m, label) {
     mode = m;
     document.body.className = m;
@@ -317,13 +447,12 @@
       clearTimeout(thinkingTimer);
       thinkingTimer = null;
     }
-    if (m === "listening") orbCore.textContent = "🎙️";
-    else if (m === "thinking") {
-      orbCore.textContent = "⚡";
+    if (m === "thinking") {
       thinkingTimer = setTimeout(() => {
         if (inCall && mode === "thinking") startListeningTurn();
-      }, 6500);
-    } else if (m === "speaking") orbCore.textContent = "🔊";
+      }, 9000);
+    }
+    updateActionUI();
   }
 
   function updateTimer() {
@@ -337,16 +466,20 @@
   let speechQueue = [];
 
   async function speakText(text) {
-    if (!inCall) return;
+    if (!inCall || !text) return;
+    const now = Date.now();
+    if (text === lastSpokenMsg && now - lastSpokenAt < 4000) return;
+    lastSpokenMsg = text;
+    lastSpokenAt = now;
+
     if (mode === "speaking" && currentAudio && !currentAudio.paused) {
       speechQueue.push(text);
       return;
     }
-    // Zatrzymaj nagrywanie mikrofonu na czas mówienia Jarvisa, żeby NIGDY nie łapał własnego echa z głośnika!
     if (mediaRecorder && mediaRecorder.state === "recording") {
       try { mediaRecorder.onstop = null; mediaRecorder.stop(); } catch (e) {}
     }
-    setMode("speaking", "Jarvis mówi (dotknij kuli, by przerwać)");
+    setMode("speaking", "Jarvis mówi...");
     liveEl.textContent = "🤖 " + text;
 
     try {
@@ -362,7 +495,7 @@
           text: ttsInput,
           model_id: "eleven_flash_v2_5",
           language_code: "pl",
-          voice_settings: { stability: 0.42, similarity_boost: 0.80, style: 0.0, use_speaker_boost: true, speed: 1.08 }
+          voice_settings: { stability: 0.55, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 1.00 }
         })
       });
       if (!inCall || mode !== "speaking") return;
@@ -380,10 +513,9 @@
           speakText(nextMsg);
           return;
         }
-        // Odczekaj 220ms po zakończeniu głosu Jarvisa, żeby pogłos w pokoju ucichł zanim włączymy mikrofon
         setTimeout(() => {
           if (inCall && mode === "speaking") startListeningTurn();
-        }, 220);
+        }, 180);
       };
       currentAudio.onerror = () => {
         if (inCall) startListeningTurn();
@@ -408,12 +540,17 @@
     };
   }
 
+  // Czarna lista halucynacji Scribe przy szumie otoczenia
+  const NOISE_HALLUCINATIONS = new Set([
+    "dziękuję", "dziekuje", "dzięki", "napisy", "muzyka", "cisza", "szum", "he", "hm", "hmm", "yyy", "eee", "aaa", "o", "a", "i", "w", "z"
+  ]);
+
   async function processRecordedBlob(blob, mime) {
-    if (!inCall || blob.size < 1000) {
+    if (!inCall || blob.size < 900) {
       if (inCall) startListeningTurn();
       return;
     }
-    setMode("thinking", "Sekunda...");
+    setMode("thinking", "Rozpoznaję mowę...");
     try {
       let ext = "webm";
       if (mime.includes("mp4") || mime.includes("aac") || mime.includes("m4a")) ext = "mp4";
@@ -427,7 +564,7 @@
       fd.append("file", blob, "voice." + ext);
 
       const ctrl = new AbortController();
-      const tId = setTimeout(() => ctrl.abort(), 3500);
+      const tId = setTimeout(() => ctrl.abort(), 5000);
       const r = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
         method: "POST",
         headers: { "xi-api-key": EL_KEY },
@@ -437,14 +574,16 @@
       clearTimeout(tId);
       const j = await r.json();
       let txt = (j.text || "").replace(/\([^)]*\)/g, "").replace(/\[[^\]]*\]/g, "").trim();
+      const cleanLow = txt.toLowerCase().replace(/[.!,?…]/g, "").trim();
       const lettersOnly = txt.replace(/[^a-ząćęłńóśźżA-ZĄĆĘŁŃÓŚŹŻ]/g, "");
-      if (!txt || lettersOnly.length < 2) {
+      if (!txt || lettersOnly.length < 3 || NOISE_HALLUCINATIONS.has(cleanLow)) {
+        liveEl.textContent = "🎙️ Nie wykryto wyraźnego zdania — mów śmiało i kliknij Wyślij.";
         if (inCall) startListeningTurn();
         return;
       }
 
       liveEl.textContent = "🗣️ Ty: „" + txt + "”";
-      setMode("thinking", "Już odpowiadam...");
+      setMode("thinking", "Jarvis odpowiada...");
       await fetch("https://ntfy.sh/" + IN_TOPIC, {
         method: "POST",
         body: txt
@@ -470,14 +609,14 @@
       currentAudio.pause();
       currentAudio = null;
     }
-    setMode("listening", isMuted ? "Mikrofon wyciszony" : "Słucham Cię stary — mów...");
+    setMode("listening", isMuted ? "Mikrofon wyciszony" : "🎙️ Mów śmiało — kliknij zielony przycisk gdy skończysz");
     allChunks = [];
     speechStartChunkIdx = 0;
     speakingDetected = false;
     voiceFrames = 0;
     silenceStart = 0;
     speechStart = 0;
-    peakVoice = noiseFloor + 18;
+    peakVoice = noiseFloor + 20;
 
     const mime = getSupportedMimeType();
     try {
@@ -495,8 +634,11 @@
     mediaRecorder.onstop = () => {
       if (!inCall || mode !== "listening") return;
       let sendChunks = allChunks;
-      if (speechStartChunkIdx > 2 && allChunks.length > speechStartChunkIdx) {
-        sendChunks = [allChunks[0], ...allChunks.slice(Math.max(1, speechStartChunkIdx - 2))];
+      // Utnij ciszę sprzed momentu gdy zacząłeś mówić, zachowując nagłówek kontenera (allChunks[0])
+      if (speechStartChunkIdx > 4 && allChunks.length > speechStartChunkIdx) {
+        sendChunks = [allChunks[0], ...allChunks.slice(Math.max(1, speechStartChunkIdx - 3))];
+      } else if (allChunks.length > 350) {
+        sendChunks = [allChunks[0], ...allChunks.slice(-300)];
       }
       const blob = new Blob(sendChunks, { type: actualMime });
       processRecordedBlob(blob, actualMime);
@@ -504,8 +646,10 @@
     mediaRecorder.start(100);
   }
 
-  function interruptOrSendNow() {
+  function triggerSendOrInterrupt() {
+    if (!inCall) return;
     if (mode === "speaking") {
+      speechQueue = [];
       if (currentAudio) currentAudio.pause();
       startListeningTurn();
     } else if (mode === "listening" && mediaRecorder && mediaRecorder.state === "recording") {
@@ -515,8 +659,16 @@
     }
   }
 
-  orbWrap.addEventListener("click", () => {
-    if (inCall) interruptOrSendNow();
+  orbWrap.addEventListener("click", triggerSendOrInterrupt);
+  sendNowBtn.addEventListener("click", triggerSendOrInterrupt);
+
+  // Obsługa Spacji / Entera na komputerze Mac
+  window.addEventListener("keydown", (e) => {
+    if (!inCall) return;
+    if (e.code === "Space" || e.code === "Enter") {
+      e.preventDefault();
+      triggerSendOrInterrupt();
+    }
   });
 
   async function startCall() {
@@ -539,6 +691,8 @@
       timerInterval = setInterval(updateTimer, 1000);
 
       connectSSE();
+      playReadyBeep();
+      startListeningTurn();
 
       vadInterval = setInterval(() => {
         if (!inCall || isMuted || mode !== "listening") {
@@ -546,70 +700,66 @@
           return;
         }
         analyser.getByteFrequencyData(dataArr);
+        // Tylko pasmo ludzkiego głosu (ok. 350Hz - 2800Hz, odcięty niski szum wentylatorów Maca!)
         let vocalSum = 0;
-        for (let i = 3; i <= 26; i++) vocalSum += dataArr[i];
+        for (let i = 5; i <= 28; i++) vocalSum += dataArr[i];
         const vocalAvg = vocalSum / 24;
 
-        const scale = Math.min(1.75, 1 + Math.max(0, vocalAvg - noiseFloor) / 60);
+        const scale = Math.min(1.72, 1 + Math.max(0, vocalAvg - noiseFloor) / 55);
         orbRing.style.transform = "scale(" + scale.toFixed(2) + ")";
 
         const now = Date.now();
 
         if (!speakingDetected) {
-          // Dopasowuj poziom tła BEZ sztucznego limitu (nawet gdy wentylatory Maca szumią na 45!)
-          if (vocalAvg < noiseFloor + 14) {
-            noiseFloor = noiseFloor * 0.92 + vocalAvg * 0.08;
+          if (vocalAvg < noiseFloor + 15) {
+            noiseFloor = noiseFloor * 0.93 + vocalAvg * 0.07;
           } else {
             noiseFloor = noiseFloor * 0.992 + vocalAvg * 0.008;
           }
-          noiseFloor = Math.max(10, Math.min(65, noiseFloor));
+          noiseFloor = Math.max(12, Math.min(68, noiseFloor));
 
-          if (vocalAvg > noiseFloor + 16) {
+          // Zapisz punkt startu mowy żeby uciąć wcześniejszą ciszę
+          if (vocalAvg > noiseFloor + 18) {
             voiceFrames++;
-            if (voiceFrames >= 4) {
+            if (voiceFrames >= 5) {
               speakingDetected = true;
-              speechStart = now - 180;
+              speechStart = now - 200;
               silenceStart = now;
               peakVoice = vocalAvg;
-              speechStartChunkIdx = Math.max(0, allChunks.length - 2);
-              stateEl.textContent = "Słyszę Cię...";
+              speechStartChunkIdx = Math.max(0, allChunks.length - 3);
             }
           } else {
             voiceFrames = Math.max(0, voiceFrames - 1);
           }
         } else {
-          // Jesteśmy w trakcie słuchania Twojego zdania!
           if (vocalAvg > peakVoice) {
             peakVoice = peakVoice * 0.6 + vocalAvg * 0.4;
           }
-          // Próg kontynuacji mowy zależy od głośności Twojego głosu względem wentylatorów!
-          // Jeśli głośność spadnie do dolnych 42% między szumem tła a Twoim głosem -> to znaczy że skończyłeś mówić, a szumi tylko komputer!
-          const dynamicContinueThreshold = Math.max(
-            noiseFloor + 11,
-            noiseFloor + (peakVoice - noiseFloor) * 0.42
-          );
-
-          if (vocalAvg > dynamicContinueThreshold) {
-            silenceStart = now;
-          } else {
-            const silenceDur = now - silenceStart;
-            const spokenDur = silenceStart - speechStart;
-            if (spokenDur >= 240 && silenceDur > 420) {
-              speakingDetected = false;
-              voiceFrames = 0;
-              if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
+          // Tylko jeśli użytkownik ręcznie przełączył na tryb "Auto po ciszy"
+          if (SEND_MODE === "auto") {
+            const dynamicContinueThreshold = Math.max(
+              noiseFloor + 14,
+              noiseFloor + (peakVoice - noiseFloor) * 0.48
+            );
+            if (vocalAvg > dynamicContinueThreshold) {
+              silenceStart = now;
+            } else {
+              const silenceDur = now - silenceStart;
+              const spokenDur = silenceStart - speechStart;
+              if (spokenDur >= 450 && silenceDur > 750) {
+                speakingDetected = false;
+                voiceFrames = 0;
+                if (mediaRecorder && mediaRecorder.state === "recording") {
+                  mediaRecorder.stop();
+                }
+              } else if (spokenDur < 450 && silenceDur > 600) {
+                speakingDetected = false;
+                voiceFrames = 0;
               }
-            } else if (spokenDur < 240 && silenceDur > 480) {
-              speakingDetected = false;
-              voiceFrames = 0;
-              stateEl.textContent = "Słucham Cię stary — mów...";
             }
           }
         }
       }, 40);
-
-      speakText("Siema stary, wrzuciłem luźny głos i pięć razy szybszą odpowiedź. Co tam działamy?");
     } catch (err) {
       stateEl.textContent = "Kliknij zieloną słuchawkę poniżej";
       liveEl.textContent = "Dotknij zielonej słuchawki, żeby włączyć mikrofon.";
@@ -644,13 +794,13 @@
     muteBtn.classList.toggle("muted", isMuted);
     muteBtn.textContent = isMuted ? "🔇" : "🎤";
     if (mode === "listening") {
-      stateEl.textContent = isMuted ? "Mikrofon wyciszony" : "Słucham Cię stary — mów...";
+      stateEl.textContent = isMuted ? "Mikrofon wyciszony" : "🎙️ Mów śmiało — kliknij zielony przycisk gdy skończysz";
     }
   });
 
   setTimeout(() => {
     if (!inCall) startCall();
-  }, 120);
+  }, 100);
 })();
 </script>
 </body>
