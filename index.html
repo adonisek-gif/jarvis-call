@@ -360,21 +360,26 @@
             stateEl.textContent = "Słyszę Cię...";
           }
           silenceStart = now;
-        } else if (speakingDetected && silenceStart > 0 && (now - silenceStart > 1150)) {
-          // 1.15s ciszy po wypowiedzi -> automatycznie wyślij!
+        } else if (speakingDetected && silenceStart > 0 && (now - silenceStart > 750)) {
+          // 0.75s ciszy po wypowiedzi -> błyskawicznie wyślij!
           speakingDetected = false;
           if (mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
           }
         }
-      }, 60);
+      }, 50);
 
-      speakText("Jestem na linii. Co robimy?");
+      speakText("Jestem. Co tam?");
     } catch (err) {
-      stateEl.textContent = "Zezwól na dostęp do mikrofonu";
-      liveEl.textContent = "Błąd mikrofonu: " + err.message;
+      stateEl.textContent = "Dotknij zielonej słuchawki, aby włączyć mikrofon";
+      liveEl.textContent = "Kliknij zieloną słuchawkę poniżej, żeby połączyć.";
     }
   }
+
+  // Automatyczny start połączenia od razu po otwarciu okna!
+  setTimeout(() => {
+    if (!inCall) startCall();
+  }, 150);
 
   function endCall() {
     inCall = false;
