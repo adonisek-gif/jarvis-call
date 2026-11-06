@@ -260,10 +260,17 @@
     window.Telegram.WebApp.expand();
   }
 
+  function safeGetStorage(k) {
+    try { return localStorage.getItem(k); } catch (e) { return null; }
+  }
+  function safeSetStorage(k, v) {
+    try { localStorage.setItem(k, v); } catch (e) {}
+  }
+
   const hash = new URLSearchParams(location.hash.slice(1));
   const EL_KEY = hash.get("k") || "";
-  let VOICE_ID = localStorage.getItem("jarvis_vid") || hash.get("v") || "D8ErlhVOf4GjkEycIO7I";
-  let SEND_MODE = localStorage.getItem("jarvis_send_mode") || "manual"; // Domyślnie manual: zero fałszywych wykryć hałasu!
+  let VOICE_ID = safeGetStorage("jarvis_vid") || hash.get("v") || "D8ErlhVOf4GjkEycIO7I";
+  let SEND_MODE = safeGetStorage("jarvis_send_mode") || "manual"; // Domyślnie manual: zero fałszywych wykryć hałasu!
   const IN_TOPIC = hash.get("in") || "";
   const OUT_TOPIC = hash.get("out") || "";
 
@@ -272,7 +279,7 @@
     else btn.classList.remove("active");
     btn.addEventListener("click", () => {
       VOICE_ID = btn.dataset.vid;
-      localStorage.setItem("jarvis_vid", VOICE_ID);
+      safeSetStorage("jarvis_vid", VOICE_ID);
       document.querySelectorAll(".v-pill").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
     });
@@ -283,7 +290,7 @@
     else btn.classList.remove("active");
     btn.addEventListener("click", () => {
       SEND_MODE = btn.dataset.mode;
-      localStorage.setItem("jarvis_send_mode", SEND_MODE);
+      safeSetStorage("jarvis_send_mode", SEND_MODE);
       document.querySelectorAll(".m-pill").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       updateActionUI();
