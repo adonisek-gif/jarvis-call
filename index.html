@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Argon Jarvis — Ziomek Live v3</title>
+<title>Argon Jarvis — Ziomek Live v4</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -26,9 +26,9 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    background: rgba(16,185,129,0.2);
-    color: #34d399;
-    border: 1px solid rgba(16,185,129,0.4);
+    background: rgba(56,189,248,0.2);
+    color: #38bdf8;
+    border: 1px solid rgba(56,189,248,0.45);
     padding: 3px 10px;
     border-radius: 99px;
     margin-bottom: 8px;
@@ -132,7 +132,7 @@
 <body>
 
 <div class="header">
-  <div class="badge">⚡ Flash Lite 0.9s • Filtr Hałasu v3</div>
+  <div class="badge">🎙️ v4 • Czysty Głos 1.0x • Odporny na Szum Komputera</div>
   <div class="name">Argon Jarvis</div>
   <div class="state" id="stateText">Łączę...</div>
   <div class="timer" id="timerText">00:00</div>
@@ -144,8 +144,8 @@
 </div>
 
 <div class="transcript-box">
-  <div id="liveText">Gadaj normalnie jak z ziomkiem — stuki i hałas z tła są wycinane automatycznie.</div>
-  <div class="sub-hint" id="hintText">Dotknij kuli, żeby od razu wysłać zdanie lub przerwać Jarvisowi</div>
+  <div id="liveText">Gadaj normalnie — szum wentylatorów i echo głośnika są całkowicie odcięte.</div>
+  <div class="sub-hint" id="hintText">Dotknij kuli w dowolnej chwili, aby od razu wysłać zdanie lub przerwać</div>
 </div>
 
 <div class="controls">
@@ -162,7 +162,8 @@
 
   const hash = new URLSearchParams(location.hash.slice(1));
   const EL_KEY = hash.get("k") || "";
-  const VOICE_ID = hash.get("v") || "hUoarWcuDA1jiaKavjf4";
+  // Domyślnie spokojny, naturalny polski głos męski (vEEOzNgW5AZVHnBZA03D)
+  const VOICE_ID = hash.get("v") || "vEEOzNgW5AZVHnBZA03D";
   const IN_TOPIC = hash.get("in") || "";
   const OUT_TOPIC = hash.get("out") || "";
 
@@ -187,13 +188,13 @@
   let voiceFrames = 0;
   let silenceStart = 0;
   let speechStart = 0;
-  let noiseFloor = 12;
+  let noiseFloor = 22;
+  let peakVoice = 35;
   let sse = null;
   let currentAudio = null;
   let callStartTime = 0;
   let timerInterval = null;
   let vadInterval = null;
-  let bargeInFrames = 0;
   let thinkingTimer = null;
 
   function polishNumToWords(n) {
@@ -245,7 +246,6 @@
     if (m === "listening") orbCore.textContent = "🎙️";
     else if (m === "thinking") {
       orbCore.textContent = "⚡";
-      // Bezpiecznik: gdyby sieć przycięła, po 6.5s automatycznie wróć do nasłuchu (nigdy się nie zawiesi!)
       thinkingTimer = setTimeout(() => {
         if (inCall && mode === "thinking") startListeningTurn();
       }, 6500);
@@ -262,14 +262,17 @@
 
   async function speakText(text) {
     if (!inCall) return;
-    setMode("speaking", "Jarvis mówi (zacznij mówić, by przerwać)");
+    // Zatrzymaj nagrywanie mikrofonu na czas mówienia Jarvisa, żeby NIGDY nie łapał własnego echa z głośnika!
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      try { mediaRecorder.onstop = null; mediaRecorder.stop(); } catch (e) {}
+    }
+    setMode("speaking", "Jarvis mówi (dotknij kuli, by przerwać)");
     liveEl.textContent = "🤖 " + text;
-    bargeInFrames = 0;
 
     try {
       const ttsInput = cleanTextForPolishTTS(text);
-      // Używamy mp3_22050_32 + optimize_streaming_latency=4 -> generuje głos w 0.3 sekundy!
-      const url = "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "?output_format=mp3_22050_32&optimize_streaming_latency=4";
+      // Czysta jakość 44.1kHz, naturalna prędkość 1.0x (zero robotycznego przyspieszania!)
+      const url = "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "?output_format=mp3_44100_64&optimize_streaming_latency=2";
       const resp = await fetch(url, {
         method: "POST",
         headers: {
@@ -280,7 +283,7 @@
           text: ttsInput,
           model_id: "eleven_turbo_v2_5",
           language_code: "pl",
-          voice_settings: { stability: 0.42, similarity_boost: 0.85, speed: 1.10 }
+          voice_settings: { stability: 0.55, similarity_boost: 0.80, style: 0.0, use_speaker_boost: true, speed: 1.0 }
         })
       });
       if (!inCall || mode !== "speaking") return;
@@ -292,7 +295,10 @@
       currentAudio = new Audio(audioUrl);
       currentAudio.onended = () => {
         URL.revokeObjectURL(audioUrl);
-        if (inCall && mode === "speaking") startListeningTurn();
+        // Odczekaj 220ms po zakończeniu głosu Jarvisa, żeby pogłos w pokoju ucichł zanim włączymy mikrofon
+        setTimeout(() => {
+          if (inCall && mode === "speaking") startListeningTurn();
+        }, 220);
       };
       currentAudio.onerror = () => {
         if (inCall) startListeningTurn();
@@ -332,7 +338,7 @@
       const fd = new FormData();
       fd.append("model_id", "scribe_v1");
       fd.append("language_code", "pl");
-      fd.append("tag_audio_events", "false"); // NIE opisuj dźwięków z tła typu (muzyka), (stuknięcie)!
+      fd.append("tag_audio_events", "false");
       fd.append("file", blob, "voice." + ext);
 
       const ctrl = new AbortController();
@@ -345,11 +351,9 @@
       });
       clearTimeout(tId);
       const j = await r.json();
-      // Wytnij ewentualne nawiasy z odgłosami tła np. (szum), [muzyka]
       let txt = (j.text || "").replace(/\([^)]*\)/g, "").replace(/\[[^\]]*\]/g, "").trim();
       const lettersOnly = txt.replace(/[^a-ząćęłńóśźżA-ZĄĆĘŁŃÓŚŹŻ]/g, "");
       if (!txt || lettersOnly.length < 2) {
-        // To był tylko dźwięk z tła, nie ludzka mowa -> natychmiast słuchaj dalej bez zawieszania!
         if (inCall) startListeningTurn();
         return;
       }
@@ -388,6 +392,7 @@
     voiceFrames = 0;
     silenceStart = 0;
     speechStart = 0;
+    peakVoice = noiseFloor + 18;
 
     const mime = getSupportedMimeType();
     try {
@@ -403,7 +408,6 @@
     };
     mediaRecorder.onstop = () => {
       if (!inCall || mode !== "listening") return;
-      // Bierzemy zawsze nagłówek (chunk 0) + tylko fragment od momentu kiedy faktycznie zacząłeś mówić!
       let sendChunks = allChunks;
       if (speechStartChunkIdx > 2 && allChunks.length > speechStartChunkIdx) {
         sendChunks = [allChunks[0], ...allChunks.slice(Math.max(1, speechStartChunkIdx - 2))];
@@ -451,71 +455,66 @@
       connectSSE();
 
       vadInterval = setInterval(() => {
-        if (!inCall || isMuted) {
+        if (!inCall || isMuted || mode !== "listening") {
           orbRing.style.transform = "scale(1)";
           return;
         }
         analyser.getByteFrequencyData(dataArr);
-        // Pasmo ludzkiego głosu (ok. 300 Hz - 2400 Hz -> biny 3..28 przy fftSize=512)
         let vocalSum = 0;
-        for (let i = 3; i <= 28; i++) vocalSum += dataArr[i];
-        const vocalAvg = vocalSum / 26;
+        for (let i = 3; i <= 26; i++) vocalSum += dataArr[i];
+        const vocalAvg = vocalSum / 24;
 
-        const scale = Math.min(1.75, 1 + Math.max(0, vocalAvg - noiseFloor) / 65);
+        const scale = Math.min(1.75, 1 + Math.max(0, vocalAvg - noiseFloor) / 60);
         orbRing.style.transform = "scale(" + scale.toFixed(2) + ")";
 
         const now = Date.now();
 
-        // BARGE-IN: Przerywanie Jarvisowi gdy zaczynasz mówić
-        if (mode === "speaking") {
-          if (vocalAvg > noiseFloor + 26) {
-            bargeInFrames++;
-            if (bargeInFrames >= 5) {
-              bargeInFrames = 0;
-              if (currentAudio) currentAudio.pause();
-              startListeningTurn();
+        if (!speakingDetected) {
+          // Dopasowuj poziom tła BEZ sztucznego limitu (nawet gdy wentylatory Maca szumią na 45!)
+          if (vocalAvg < noiseFloor + 14) {
+            noiseFloor = noiseFloor * 0.92 + vocalAvg * 0.08;
+          } else {
+            noiseFloor = noiseFloor * 0.992 + vocalAvg * 0.008;
+          }
+          noiseFloor = Math.max(10, Math.min(65, noiseFloor));
+
+          if (vocalAvg > noiseFloor + 16) {
+            voiceFrames++;
+            if (voiceFrames >= 4) {
+              speakingDetected = true;
+              speechStart = now - 180;
+              silenceStart = now;
+              peakVoice = vocalAvg;
+              speechStartChunkIdx = Math.max(0, allChunks.length - 2);
+              stateEl.textContent = "Słyszę Cię...";
             }
           } else {
-            bargeInFrames = Math.max(0, bargeInFrames - 1);
-          }
-          return;
-        }
-
-        if (mode !== "listening") return;
-
-        // Adaptacyjne tło: gdy nie mówisz, powoli dostosowuj poziom szumu otoczenia
-        if (!speakingDetected && vocalAvg < noiseFloor + 12) {
-          noiseFloor = noiseFloor * 0.96 + vocalAvg * 0.04;
-          noiseFloor = Math.max(8, Math.min(32, noiseFloor));
-        }
-
-        const isVoiceNow = vocalAvg > (noiseFloor + 15);
-
-        if (isVoiceNow) {
-          voiceFrames++;
-          silenceStart = now;
-          // Wymagaj min. 4 kolejnych ramek (~180ms) ciągłego głosu (ignoruje pojedyncze stuki, kliknięcia i szumy!)
-          if (!speakingDetected && voiceFrames >= 4) {
-            speakingDetected = true;
-            speechStart = now - 180;
-            speechStartChunkIdx = Math.max(0, allChunks.length - 2);
-            stateEl.textContent = "Słyszę Cię...";
+            voiceFrames = Math.max(0, voiceFrames - 1);
           }
         } else {
-          if (!speakingDetected) {
-            voiceFrames = Math.max(0, voiceFrames - 1);
-          } else if (silenceStart > 0) {
+          // Jesteśmy w trakcie słuchania Twojego zdania!
+          if (vocalAvg > peakVoice) {
+            peakVoice = peakVoice * 0.6 + vocalAvg * 0.4;
+          }
+          // Próg kontynuacji mowy zależy od głośności Twojego głosu względem wentylatorów!
+          // Jeśli głośność spadnie do dolnych 42% między szumem tła a Twoim głosem -> to znaczy że skończyłeś mówić, a szumi tylko komputer!
+          const dynamicContinueThreshold = Math.max(
+            noiseFloor + 11,
+            noiseFloor + (peakVoice - noiseFloor) * 0.42
+          );
+
+          if (vocalAvg > dynamicContinueThreshold) {
+            silenceStart = now;
+          } else {
             const silenceDur = now - silenceStart;
             const spokenDur = silenceStart - speechStart;
-            // 620ms ciszy po zdaniu -> wyślij!
-            if (spokenDur >= 320 && silenceDur > 620) {
+            if (spokenDur >= 280 && silenceDur > 580) {
               speakingDetected = false;
               voiceFrames = 0;
               if (mediaRecorder && mediaRecorder.state === "recording") {
                 mediaRecorder.stop();
               }
-            } else if (spokenDur < 320 && silenceDur > 650) {
-              // Krótki hałas <0.3s -> zignoruj bez wysyłania!
+            } else if (spokenDur < 280 && silenceDur > 600) {
               speakingDetected = false;
               voiceFrames = 0;
               stateEl.textContent = "Słucham Cię stary — mów...";
@@ -524,7 +523,7 @@
         }
       }, 45);
 
-      speakText("Siema stary, weszła nowa wersja z wycinaniem hałasu i szybkim Flashem. Słyszysz mnie dobrze?");
+      speakText("Siema stary, włączyłem spokojny, czysty głos i odciąłem szum Twojego komputera. Jak mnie teraz słychać?");
     } catch (err) {
       stateEl.textContent = "Kliknij zieloną słuchawkę poniżej";
       liveEl.textContent = "Dotknij zielonej słuchawki, żeby włączyć mikrofon.";
@@ -539,7 +538,7 @@
     if (sse) sse.close();
     if (currentAudio) currentAudio.pause();
     if (mediaRecorder && mediaRecorder.state === "recording") {
-      try { mediaRecorder.stop(); } catch (e) {}
+      try { mediaRecorder.onstop = null; mediaRecorder.stop(); } catch (e) {}
     }
     if (mediaStream) {
       mediaStream.getTracks().forEach(t => t.stop());
