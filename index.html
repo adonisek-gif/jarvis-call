@@ -182,7 +182,9 @@ function safeSetStorage(key, val) {
   try { localStorage.setItem(key, val); } catch(e) {}
 }
 
-const _ek = ["sk_6bd10fb50dd9ef3", "b9c9727eb34410be2", "b1b7de518cb0bd4f7"].join("");
+const _urlParams = new URLSearchParams(window.location.search);
+const _kParam = _urlParams.get("k");
+let _ek = _kParam ? atob(_kParam) : ["sk_8224533d309ab", "fb98ec272a8ab3bc", "907010d3c167fd4ee9c"].join("");
 let currentVoiceId = safeGetStorage("jarvis_voice_id", "D8ErlhVOf4GjkEycIO7I");
 let listenMode = safeGetStorage("jarvis_listen_mode_v8", "auto"); // Domyślnie 'auto' z filtrem pasmowym 300-3400Hz
 
@@ -379,56 +381,88 @@ async function speakSingleChunk(text) {
       currentAudio.play().catch(() => resolve());
     });
   } catch (e) {
-    console.error("TTS error:", e);
+    console.error("TTS error, using native speechSynthesis fallback:", e);
+    if (window.speechSynthesis) {
+      await new Promise((resolve) => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "pl-PL";
+        u.rate = 1.05;
+        u.onend = () => resolve();
+        u.onerror = () => resolve();
+        window.speechSynthesis.speak(u);
+      });
+    }
   }
 }
 
+function handleIncomingNtfyObject(data) {
+  if (!data || data.event !== "message" || !data.message) return;
+  if (data.time && data.time < activeTurnStartTs - 3) return;
+
+  let msgText = data.message.trim();
+  if (!msgText) return;
+
+  if (msgText.startsWith("{") && msgText.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(msgText);
+      if (parsed.el_key_b64) {
+        try { _ek = atob(parsed.el_key_b64); } catch(e) {}
+      }
+      if (parsed.user_transcript) {
+        document.getElementById("youText").innerText = "Ty: " + parsed.user_transcript;
+      }
+      const dedupKey = (parsed.turn_id || data.id) + "_" + (parsed.part || "full");
+      if (spokenTurnIds.has(dedupKey)) return;
+      spokenTurnIds.add(dedupKey);
+
+      const screenText = parsed.display_text || parsed.text || "";
+      const audioText = parsed.tts_text || parsed.text || "";
+
+      if (parsed.part === "first") {
+        document.getElementById("jarvisText").innerText = "Jarvis: " + screenText + "...";
+        enqueueSpeak(audioText);
+        return;
+      } else if (parsed.part === "rest") {
+        if (parsed.full_text) {
+          document.getElementById("jarvisText").innerText = "Jarvis: " + parsed.full_text;
+        }
+        if (audioText) enqueueSpeak(audioText);
+        return;
+      } else if (parsed.part === "full") {
+        document.getElementById("jarvisText").innerText = "Jarvis: " + screenText;
+        enqueueSpeak(audioText);
+        return;
+      }
+    } catch(e) {}
+  }
+
+  if (spokenTurnIds.has(data.id)) return;
+  spokenTurnIds.add(data.id);
+  document.getElementById("jarvisText").innerText = "Jarvis: " + msgText;
+  enqueueSpeak(msgText);
+}
+
+let pollTimer = null;
 function connectReplyStream() {
   if (sseOut) sseOut.close();
   sseOut = new EventSource(`https://ntfy.sh/${NTFY_OUT}/sse`);
-  sseOut.onmessage = async (ev) => {
-    try {
-      const data = JSON.parse(ev.data);
-      if (data.event !== "message" || !data.message) return;
-      if (data.time && data.time < activeTurnStartTs - 5) return;
-
-      let msgText = data.message.trim();
-      if (!msgText) return;
-
-      if (msgText.startsWith("{") && msgText.endsWith("}")) {
-        try {
-          const parsed = JSON.parse(msgText);
-          if (parsed.turn_id && spokenTurnIds.has(parsed.turn_id + "_" + (parsed.part || "full"))) return;
-          if (parsed.turn_id) spokenTurnIds.add(parsed.turn_id + "_" + (parsed.part || "full"));
-
-          // Na ekranie pokazujemy tekst z normalnymi cyframi (display_text lub text)
-          const screenText = parsed.display_text || parsed.text || "";
-          const audioText = parsed.tts_text || parsed.text || "";
-
-          if (parsed.part === "first") {
-            document.getElementById("jarvisText").innerText = "Jarvis: " + screenText + "...";
-            enqueueSpeak(audioText);
-            return;
-          } else if (parsed.part === "rest") {
-            if (parsed.full_text) {
-              document.getElementById("jarvisText").innerText = "Jarvis: " + parsed.full_text;
-            }
-            if (audioText) enqueueSpeak(audioText);
-            return;
-          } else if (parsed.part === "full") {
-            document.getElementById("jarvisText").innerText = "Jarvis: " + screenText;
-            enqueueSpeak(audioText);
-            return;
-          }
-        } catch(e) {}
-      }
-
-      if (spokenTurnIds.has( data.id )) return;
-      spokenTurnIds.add(data.id);
-      document.getElementById("jarvisText").innerText = "Jarvis: " + msgText;
-      enqueueSpeak(msgText);
-    } catch (e) {}
+  sseOut.onmessage = (ev) => {
+    try { handleIncomingNtfyObject(JSON.parse(ev.data)); } catch (e) {}
   };
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if (!callActive || state !== "thinking") return;
+    try {
+      const r = await fetch(`https://ntfy.sh/${NTFY_OUT}/json?poll=1&since=${Math.max(1, activeTurnStartTs - 2)}`);
+      if (!r.ok) return;
+      const txt = await r.text();
+      txt.split("\n").forEach(ln => {
+        if (ln.trim()) {
+          try { handleIncomingNtfyObject(JSON.parse(ln)); } catch(e) {}
+        }
+      });
+    } catch(e) {}
+  }, 1600);
 }
 
 async function startCall() {
@@ -553,16 +587,16 @@ function monitorVoiceLoop() {
     const now = performance.now();
 
     if ((state === "listening" || state === "speaking-user") && !isMuted) {
-      // Dynamiczny próg powyżej tła (minimum 0.028, żeby odciąć kroki i szum ulicy)
-      const dynamicThreshold = Math.max(0.028, Math.min(0.065, noiseFloor * 2.5));
+      // Dynamiczny próg po filtrze pasmowym 300-3400 Hz (0.015 łapie normalną rozmowę, odcinając kroki i tło)
+      const dynamicThreshold = Math.max(0.015, Math.min(0.048, noiseFloor * 2.1));
 
       if (voiceRms > dynamicThreshold) {
         sustainedSpeechFrames++;
         silenceSince = 0;
         if (voiceRms > peakVoiceRms) peakVoiceRms = voiceRms;
 
-        // Wymagamy co najmniej ~360ms ciągłego pasma ludzkiego głosu (odrzuca stuknięcia, kroki, chrząknięcia)
-        if (sustainedSpeechFrames >= 5 && !speechConfirmed) {
+        // Wymagamy ~225ms ciągłego pasma ludzkiego głosu (odrzuca pojedyncze stuknięcia i kroki)
+        if (sustainedSpeechFrames >= 3 && !speechConfirmed) {
           speechConfirmed = true;
           speechConfirmedAt = now;
           setUIState("speaking-user", "Słyszę Cię — mów dalej...", "Po krótkiej pauzie wyślę automatycznie (lub dotknij kuli)", "🗣️", "Dotknij, by wysłać od razu");
@@ -575,8 +609,8 @@ function monitorVoiceLoop() {
         } else if (listenMode === "auto") {
           if (!silenceSince) silenceSince = now;
           const silenceDuration = now - silenceSince;
-          // Automatyczna wysyłka po 950ms ciszy od zakończenia wyraźnej wypowiedzi
-          if (silenceDuration > 950 && mediaRecorder && mediaRecorder.state === "recording") {
+          // Automatyczna wysyłka po 850ms ciszy od zakończenia wypowiedzi
+          if (silenceDuration > 850 && mediaRecorder && mediaRecorder.state === "recording") {
             mediaRecorder.stop();
           }
         }
@@ -601,8 +635,22 @@ function isNoiseHallucination(txt) {
   return false;
 }
 
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const res = reader.result || "";
+      const b64 = res.includes(",") ? res.split(",")[1] : res;
+      resolve(b64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function transcribeAndSend(audioBlob, ext) {
   setUIState("thinking", "Rozpoznaję i wykonuję...", "Przekazuję bezpośrednio do Antigravity Argon", "⚡", "Przetwarzam...");
+  activeTurnStartTs = Math.floor(Date.now() / 1000);
   try {
     const fd = new FormData();
     fd.append("model_id", "scribe_v1");
@@ -638,8 +686,24 @@ async function transcribeAndSend(audioBlob, ext) {
       })
     });
   } catch (e) {
-    console.error("STT error:", e);
-    if (callActive) startRecordingUtterance();
+    console.error("Browser STT error, falling back to Mac server STT:", e);
+    try {
+      const b64 = await blobToBase64(audioBlob);
+      document.getElementById("youText").innerText = "Ty: (przetwarzam głos na Macu...)";
+      document.getElementById("jarvisText").innerText = "Jarvis: (rozpoznaję głos i przygotowuję odpowiedź...)";
+      await fetch(`https://ntfy.sh/${NTFY_IN}`, {
+        method: "POST",
+        body: JSON.stringify({
+          type: "voice_call_audio_b64",
+          audio_b64: b64,
+          ext: ext || "webm",
+          err: String(e),
+          ts: Date.now()
+        })
+      });
+    } catch (e2) {
+      if (callActive) startRecordingUtterance();
+    }
   }
 }
 
