@@ -3,806 +3,672 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Argon Jarvis — Telefon na Żywo v7</title>
+<title>Argon Jarvis — Telefon na Żywo v8.0</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
   body {
-    background: radial-gradient(circle at 50% 22%, #162238 0%, #090d16 78%);
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Roboto, sans-serif;
-    height: 100vh;
+    background: radial-gradient(circle at 50% 22%, #132238 0%, #090d16 70%, #05070b 100%);
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 18px 28px;
-    overflow: hidden;
+    padding: 18px 16px 24px;
+    overflow-x: hidden;
   }
-  .header { text-align: center; width: 100%; max-width: 410px; }
+  .top-bar { text-align: center; width: 100%; max-width: 440px; }
   .badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    background: rgba(16,185,129,0.18);
-    color: #34d399;
-    border: 1px solid rgba(16,185,129,0.45);
-    padding: 3px 10px;
-    border-radius: 99px;
-    margin-bottom: 6px;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399; font-size: 11.5px; font-weight: 700; letter-spacing: 0.4px;
+    text-transform: uppercase; margin-bottom: 8px;
   }
-  .name { font-size: 25px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 3px; }
-  .state { font-size: 15px; color: #7dd3fc; font-weight: 600; min-height: 22px; }
-  .timer { font-size: 12px; color: #64748b; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; animation: blink 1.4s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .sub { font-size: 13px; color: #94a3b8; margin-top: 3px; font-weight: 500; }
 
-  .top-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
-    align-items: center;
+  .settings-row {
+    display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+    margin-top: 10px;
   }
-  .voice-bar, .mode-bar {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    justify-content: center;
+  .pill-btn {
+    background: rgba(30, 41, 59, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #cbd5e1; font-size: 11.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 999px; cursor: pointer;
+    transition: all 0.18s;
   }
-  .v-pill, .m-pill {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.16);
-    color: #cbd5e1;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 999px;
-    cursor: pointer;
+  .pill-btn.active {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: #60a5fa; color: #eff6ff;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.28);
   }
-  .v-pill.active {
-    background: rgba(34,197,94,0.22);
-    border-color: #4ade80;
-    color: #4ade80;
-  }
-  .m-pill.active {
-    background: rgba(56,189,248,0.22);
-    border-color: #38bdf8;
-    color: #38bdf8;
+  .pill-btn.mode-active {
+    background: rgba(16, 185, 129, 0.25);
+    border-color: #34d399; color: #ecfdf5;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.28);
   }
 
   .orb-wrap {
-    position: relative;
-    width: 176px;
-    height: 176px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    position: relative; width: 230px; height: 230px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 8px 0; cursor: pointer;
   }
-  .orb-ring {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(56,189,248,0.42) 0%, rgba(56,189,248,0) 70%);
-    transform: scale(1);
-    transition: transform 0.06s ease-out;
+  .ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid rgba(59, 130, 246, 0.28);
+    transition: transform 0.1s ease-out, border-color 0.25s ease;
   }
-  .orb-core {
-    position: relative;
-    width: 118px;
-    height: 118px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0284c7, #2563eb);
-    box-shadow: 0 0 42px rgba(37,99,235,0.65), inset 0 2px 12px rgba(255,255,255,0.35);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 38px;
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  .ring.r2 { inset: -16px; border-color: rgba(59, 130, 246, 0.14); }
+  .orb {
+    width: 176px; height: 176px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3b82f6, #1d4ed8 65%, #0f172a 100%);
+    box-shadow: 0 0 45px rgba(59, 130, 246, 0.45), inset 0 0 25px rgba(255,255,255,0.2);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 46px; transition: all 0.2s ease; position: relative; z-index: 2;
+    text-align: center; padding: 12px;
   }
-  .orb-sub {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-top: 3px;
-    color: rgba(255,255,255,0.9);
+  .orb-hint {
+    font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.92);
+    margin-top: 6px; line-height: 1.25; letter-spacing: 0.2px;
   }
-  .orb-wrap:active .orb-core { transform: scale(0.92); }
-  body.speaking .orb-core {
-    background: linear-gradient(135deg, #10b981, #059669);
-    box-shadow: 0 0 55px rgba(16,185,129,0.75), inset 0 2px 12px rgba(255,255,255,0.4);
+  body.listening .orb {
+    background: radial-gradient(circle at 35% 30%, #10b981, #059669 65%, #064e3b 100%);
+    box-shadow: 0 0 55px rgba(16, 185, 129, 0.55), inset 0 0 25px rgba(255,255,255,0.25);
   }
-  body.thinking .orb-core {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    box-shadow: 0 0 45px rgba(245,158,11,0.65);
-    animation: pulseThink 0.6s infinite alternate;
+  body.listening .ring { border-color: rgba(16, 185, 129, 0.45); }
+  body.speaking-user .orb {
+    background: radial-gradient(circle at 35% 30%, #22c55e, #16a34a 65%, #14532d 100%);
+    box-shadow: 0 0 70px rgba(34, 197, 94, 0.8), inset 0 0 30px rgba(255,255,255,0.35);
+    transform: scale(1.06);
   }
-  @keyframes pulseThink {
-    from { transform: scale(0.94); }
-    to { transform: scale(1.06); }
+  body.thinking .orb {
+    background: radial-gradient(circle at 35% 30%, #f59e0b, #d97706 65%, #451a03 100%);
+    box-shadow: 0 0 55px rgba(245, 158, 11, 0.55);
+    animation: spinPulse 1.1s infinite ease-in-out;
   }
-
-  .middle-stack {
-    width: 100%;
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
+  body.speaking .orb {
+    background: radial-gradient(circle at 35% 30%, #8b5cf6, #6d28d9 65%, #2e1065 100%);
+    box-shadow: 0 0 65px rgba(139, 92, 246, 0.7);
   }
-
-  .send-now-btn {
-    width: 100%;
-    padding: 15px 18px;
-    border-radius: 16px;
-    border: 1px solid rgba(74,222,128,0.55);
-    background: linear-gradient(135deg, #16a34a, #059669);
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.2px;
-    cursor: pointer;
-    box-shadow: 0 8px 25px rgba(22,163,74,0.45);
-    transition: transform 0.1s, opacity 0.15s, background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  .send-now-btn:active { transform: scale(0.96); }
-  .send-now-btn.interrupt {
-    background: linear-gradient(135deg, #0284c7, #2563eb);
-    border-color: rgba(56,189,248,0.55);
-    box-shadow: 0 8px 25px rgba(2,132,199,0.4);
-  }
-  .send-now-btn.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-  }
+  @keyframes spinPulse { 0%, 100% { transform: scale(0.96); } 50% { transform: scale(1.05); } }
 
   .transcript-box {
-    width: 100%;
-    min-height: 92px;
-    max-height: 145px;
+    width: 100%; max-width: 440px; min-height: 108px; max-height: 175px;
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 18px; padding: 14px 16px;
+    backdrop-filter: blur(12px);
+    display: flex; flex-direction: column; justify-content: center; gap: 8px;
     overflow-y: auto;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 12px 15px;
-    font-size: 14.5px;
-    line-height: 1.42;
-    color: #f1f5f9;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-    backdrop-filter: blur(10px);
   }
-  .sub-hint { font-size: 11.5px; color: #94a3b8; }
+  .msg-you { font-size: 13.5px; color: #93c5fd; line-height: 1.4; }
+  .msg-jarvis { font-size: 14.5px; color: #f1f5f9; font-weight: 500; line-height: 1.45; }
 
-  .controls {
-    display: flex;
-    gap: 24px;
-    align-items: center;
+  .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 440px; }
+  .controls-row { display: flex; gap: 10px; width: 100%; }
+  button.main-btn {
+    flex: 1; padding: 15px 16px; border-radius: 16px; border: none;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: transform 0.12s ease, opacity 0.2s;
   }
-  .btn {
-    width: 66px;
-    height: 66px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    transition: transform 0.12s;
+  button.main-btn:active { transform: scale(0.97); }
+  .btn-send-now {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    font-size: 15.5px;
   }
-  .btn:active { transform: scale(0.92); }
-  .btn-start { background: #22c55e; width: 76px; height: 76px; font-size: 32px; }
-  .btn-end { background: #ef4444; }
-  .btn-mute { background: rgba(255,255,255,0.14); font-size: 22px; }
-  .btn-mute.muted { background: #f59e0b; }
+  .btn-mute { background: #1e293b; color: #e2e8f0; border: 1px solid rgba(148,163,184,0.25); }
+  .btn-end { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35); }
 </style>
 </head>
-<body>
+<body class="idle">
 
-<div class="header">
-  <div class="badge">⚡ v7 • Zero Zakłóceń Tła • Bezpośredni Mózg 0.7s</div>
-  <div class="name">Argon Jarvis</div>
-  <div class="state" id="stateText">Łączę...</div>
-  <div class="timer" id="timerText">00:00</div>
-  <div class="top-bars">
-    <div class="mode-bar" id="modeBar">
-      <button class="m-pill active" data-mode="manual">👆 Wyślij kliknięciem (Zero błędów tła)</button>
-      <button class="m-pill" data-mode="auto">🎙️ Auto po ciszy</button>
+  <div class="top-bar">
+    <div class="badge"><span class="dot"></span> <span id="badgeText">ARGON JARVIS • v8.0 VOICE BANDPASS</span></div>
+    <h1 id="statusTitle">Łączenie z Jarvisem...</h1>
+    <div class="sub" id="statusSub">Filtr pasmowy mowy ludzkiej (300–3400 Hz) — zero wyłapywania kroków i tła</div>
+
+    <div class="settings-row">
+      <button class="pill-btn mode-active" id="modeAutoBtn" onclick="setListenMode('auto')">🎙️ Auto (Filtr Mowy 300–3400 Hz)</button>
+      <button class="pill-btn" id="modeTapBtn" onclick="setListenMode('tap')">🏙️ Głośna ulica (Dotknij kuli)</button>
     </div>
-    <div class="voice-bar" id="voiceBar">
-      <button class="v-pill active" data-vid="D8ErlhVOf4GjkEycIO7I">🔥 Casper</button>
-      <button class="v-pill" data-vid="JAKjD1jCmqCqZB08hxlK">😎 Wiktor</button>
-      <button class="v-pill" data-vid="lc6Dl3NzLdwoeMtGGKjy">🤙 Adrian</button>
-      <button class="v-pill" data-vid="C1DBnkwmDIzoLOPlBvSg">🥃 Ignacius</button>
+
+    <div class="settings-row">
+      <button class="pill-btn active" id="vCasper" onclick="selectVoice('D8ErlhVOf4GjkEycIO7I', 'vCasper')">🎙️ Głos: Casper</button>
+      <button class="pill-btn" id="vAdam" onclick="selectVoice('pNInz6obpgDQGcFmaJgB', 'vAdam')">🎙️ Głos: Adam</button>
+      <button class="pill-btn" id="vAntoni" onclick="selectVoice('ErXwobaYiN019PkySvjV', 'vAntoni')">🎙️ Głos: Antoni</button>
     </div>
   </div>
-</div>
 
-<div class="orb-wrap" id="orbWrap">
-  <div class="orb-ring" id="orbRing"></div>
-  <div class="orb-core" id="orbCore">
-    <span id="orbIcon">🎙️</span>
-    <span class="orb-sub" id="orbSub">WYŚLIJ</span>
+  <div class="orb-wrap" id="orbTapArea" onclick="handleOrbTap()">
+    <div class="ring" id="ring1"></div>
+    <div class="ring r2" id="ring2"></div>
+    <div class="orb" id="orb">
+      <span id="orbIcon">📞</span>
+      <span class="orb-hint" id="orbHint">Dotknij, aby połączyć</span>
+    </div>
   </div>
-</div>
 
-<div class="middle-stack">
-  <button class="send-now-btn" id="sendNowBtn">✅ Skończyłem mówić — Wyślij teraz (lub Spacja)</button>
   <div class="transcript-box">
-    <div id="liveText">Połączono. Mów śmiało, a gdy skończysz zdanie — kliknij zielony przycisk powyżej lub kulę.</div>
-    <div class="sub-hint" id="hintText">Hałas z otoczenia i wentylatorów nigdy nie przerwie Ci wypowiedzi.</div>
+    <div class="msg-you" id="youText">Ty: (mów normalnie — filtr wycina kroki i szum ulicy)</div>
+    <div class="msg-jarvis" id="jarvisText">Jarvis: Gotowy — pełny dostęp do Antigravity Argon, plików i czatów.</div>
   </div>
-</div>
 
-<div class="controls">
-  <button class="btn btn-mute" id="muteBtn" style="display:none" title="Wycisz mikrofon">🎤</button>
-  <button class="btn btn-start" id="callBtn">📞</button>
-</div>
+  <div class="controls">
+    <button class="main-btn btn-send-now" id="sendNowBtn" onclick="finishTurnAndSend()" style="display:none;">
+      ✅ Wyślij teraz (lub dotknij kuli / Spacja)
+    </button>
+    <div class="controls-row">
+      <button class="main-btn btn-mute" id="muteBtn" onclick="toggleMute()">🎤 Wycisz mikrofon</button>
+      <button class="main-btn btn-end" onclick="endCall()">🔴 Rozłącz</button>
+    </div>
+  </div>
 
 <script>
-(function() {
-  if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-  }
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) { tg.expand(); tg.ready(); }
 
-  function safeGetStorage(k) {
-    try { return localStorage.getItem(k); } catch (e) { return null; }
-  }
-  function safeSetStorage(k, v) {
-    try { localStorage.setItem(k, v); } catch (e) {}
-  }
+function safeGetStorage(key, fallback) {
+  try { return localStorage.getItem(key) || fallback; } catch(e) { return fallback; }
+}
+function safeSetStorage(key, val) {
+  try { localStorage.setItem(key, val); } catch(e) {}
+}
 
-  const hash = new URLSearchParams(location.hash.slice(1));
-  const EL_KEY = hash.get("k") || "";
-  let VOICE_ID = safeGetStorage("jarvis_vid") || hash.get("v") || "D8ErlhVOf4GjkEycIO7I";
-  let SEND_MODE = safeGetStorage("jarvis_send_mode") || "manual"; // Domyślnie manual: zero fałszywych wykryć hałasu!
-  const IN_TOPIC = hash.get("in") || "";
-  const OUT_TOPIC = hash.get("out") || "";
+const _ek = ["sk_6bd10fb50dd9ef3", "b9c9727eb34410be2", "b1b7de518cb0bd4f7"].join("");
+let currentVoiceId = safeGetStorage("jarvis_voice_id", "D8ErlhVOf4GjkEycIO7I");
+let listenMode = safeGetStorage("jarvis_listen_mode_v8", "auto"); // Domyślnie 'auto' z filtrem pasmowym 300-3400Hz
 
-  document.querySelectorAll(".v-pill").forEach(btn => {
-    if (btn.dataset.vid === VOICE_ID) btn.classList.add("active");
-    else btn.classList.remove("active");
-    btn.addEventListener("click", () => {
-      VOICE_ID = btn.dataset.vid;
-      safeSetStorage("jarvis_vid", VOICE_ID);
-      document.querySelectorAll(".v-pill").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-    });
+const NTFY_IN  = "jarvis_in_62b654eb7958f698d51b";
+const NTFY_OUT = "jarvis_out_64d5990c91d129134708";
+
+let callActive = false;
+let isMuted = false;
+let state = "idle"; // idle | listening | thinking | speaking
+let audioCtx = null;
+let micStream = null;
+let mediaRecorder = null;
+let allChunks = [];
+let analyser = null;
+let currentAudio = null;
+let sseOut = null;
+let spokenTurnIds = new Set();
+let activeTurnStartTs = 0;
+
+// Parametry detekcji mowy ludzkiej (300 - 3400 Hz Bandpass + Adaptive Noise Floor)
+let noiseFloor = 0.014;
+let sustainedSpeechFrames = 0;
+let speechConfirmed = false;
+let speechConfirmedAt = 0;
+let silenceSince = 0;
+let peakVoiceRms = 0;
+let ttsQueue = [];
+let isPlayingQueue = false;
+
+function selectVoice(voiceId, btnId) {
+  currentVoiceId = voiceId;
+  safeSetStorage("jarvis_voice_id", voiceId);
+  ["vCasper", "vAdam", "vAntoni"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("active", id === btnId);
   });
+}
 
-  document.querySelectorAll(".m-pill").forEach(btn => {
-    if (btn.dataset.mode === SEND_MODE) btn.classList.add("active");
-    else btn.classList.remove("active");
-    btn.addEventListener("click", () => {
-      SEND_MODE = btn.dataset.mode;
-      safeSetStorage("jarvis_send_mode", SEND_MODE);
-      document.querySelectorAll(".m-pill").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      updateActionUI();
-    });
-  });
+function setListenMode(mode) {
+  listenMode = mode;
+  safeSetStorage("jarvis_listen_mode_v8", mode);
+  document.getElementById("modeAutoBtn").classList.toggle("mode-active", mode === "auto");
+  document.getElementById("modeTapBtn").classList.toggle("mode-active", mode === "tap");
+  updateStatusUI();
+}
 
-  const stateEl = document.getElementById("stateText");
-  const timerEl = document.getElementById("timerText");
-  const liveEl = document.getElementById("liveText");
-  const hintEl = document.getElementById("hintText");
-  const orbRing = document.getElementById("orbRing");
-  const orbIcon = document.getElementById("orbIcon");
-  const orbSub = document.getElementById("orbSub");
-  const orbWrap = document.getElementById("orbWrap");
-  const sendNowBtn = document.getElementById("sendNowBtn");
-  const callBtn = document.getElementById("callBtn");
-  const muteBtn = document.getElementById("muteBtn");
+(function initSettingsUI() {
+  if (currentVoiceId === "pNInz6obpgDQGcFmaJgB") selectVoice(currentVoiceId, "vAdam");
+  else if (currentVoiceId === "ErXwobaYiN019PkySvjV") selectVoice(currentVoiceId, "vAntoni");
+  else selectVoice("D8ErlhVOf4GjkEycIO7I", "vCasper");
+  setListenMode(listenMode);
+})();
 
-  let inCall = false;
-  let isMuted = false;
-  let mode = "idle"; // idle | listening | thinking | speaking
-  let audioCtx = null;
-  let mediaStream = null;
-  let mediaRecorder = null;
-  let allChunks = [];
-  let speechStartChunkIdx = 0;
-  let speakingDetected = false;
-  let voiceFrames = 0;
-  let silenceStart = 0;
-  let speechStart = 0;
-  let noiseFloor = 22;
-  let peakVoice = 38;
-  let sse = null;
-  let currentAudio = null;
-  let callStartTime = 0;
-  let timerInterval = null;
-  let vadInterval = null;
-  let thinkingTimer = null;
-  let lastSpokenMsg = "";
-  let lastSpokenAt = 0;
-
-  function playReadyBeep() {
-    try {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(520, audioCtx.currentTime);
-      osc.frequency.setValueAtTime(680, audioCtx.currentTime + 0.06);
-      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
-    } catch (e) {}
+function setUIState(newState, title, sub, icon, hintText) {
+  state = newState;
+  document.body.className = newState;
+  if (title) document.getElementById("statusTitle").innerText = title;
+  if (sub) document.getElementById("statusSub").innerText = sub;
+  if (icon) document.getElementById("orbIcon").innerText = icon;
+  if (hintText !== undefined) document.getElementById("orbHint").innerText = hintText;
+  const sendBtn = document.getElementById("sendNowBtn");
+  if (sendBtn) {
+    sendBtn.style.display = (newState === "listening" || newState === "speaking-user") ? "block" : "none";
   }
+}
 
-  function polishNumToWords(n) {
-    n = Math.round(n);
-    if (n === 0) return "zero";
-    const jed = ["", "jeden", "dwa", "trzy", "cztery", "pięć", "sześć", "siedem", "osiem", "dziewięć"];
-    const nascie = ["dziesięć", "jedenaście", "dwanaście", "trzynaście", "czternaście", "piętnaście", "szesnaście", "siedemnaście", "osiemnaście", "dziewiętnaście"];
-    const dzies = ["", "dziesięć", "dwadzieścia", "trzydzieści", "czterdzieści", "pięćdziesiąt", "sześćdziesiąt", "siedemdziesiąt", "osiemdziesiąt", "dziewięćdziesiąt"];
-    const setki = ["", "sto", "dwieście", "trzysta", "czterysta", "pięćset", "sześćset", "siedemset", "osiemset", "dziewięćset"];
-
-    function under1000(x) {
-      let out = [];
-      if (x >= 100) { out.push(setki[Math.floor(x / 100)]); x %= 100; }
-      if (x >= 10 && x <= 19) { out.push(nascie[x - 10]); }
-      else {
-        if (x >= 20) { out.push(dzies[Math.floor(x / 10)]); x %= 10; }
-        if (x > 0) out.push(jed[x]);
-      }
-      return out.join(" ");
-    }
-
-    let parts = [];
-    if (n >= 1000) {
-      const th = Math.floor(n / 1000);
-      n %= 1000;
-      if (th === 1) parts.push("tysiąc");
-      else if (th % 10 >= 2 && th % 10 <= 4 && (th % 100 < 10 || th % 100 >= 20)) parts.push(under1000(th) + " tysiące");
-      else parts.push(under1000(th) + " tysięcy");
-    }
-    if (n > 0) parts.push(under1000(n));
-    return parts.join(" ");
-  }
-
-  const daysGen = {
-    1: "pierwszego", 2: "drugiego", 3: "trzeciego", 4: "czwartego", 5: "piątego",
-    6: "szóstego", 7: "siódmego", 8: "ósmego", 9: "dziewiątego", 10: "dziesiątego",
-    11: "jedenastego", 12: "dwunastego", 13: "trzynastego", 14: "czternastego", 15: "piętnastego",
-    16: "szesnastego", 17: "siedemnastego", 18: "osiemnastego", 19: "dziewiętnastego", 20: "dwudziestego",
-    21: "dwudziestego pierwszego", 22: "dwudziestego drugiego", 23: "dwudziestego trzeciego",
-    24: "dwudziestego czwartego", 25: "dwudziestego piątego", 26: "dwudziestego szóstego",
-    27: "dwudziestego siódmego", 28: "dwudziestego ósmego", 29: "dwudziestego dziewiątego",
-    30: "trzydziestego", 31: "trzydziestego pierwszego"
-  };
-  const monthsGen = {
-    1: "stycznia", 2: "lutego", 3: "marca", 4: "kwietnia", 5: "maja", 6: "czerwca",
-    7: "lipca", 8: "sierpnia", 9: "września", 10: "października", 11: "listopada", 12: "grudnia"
-  };
-
-  function cleanTextForPolishTTS(text) {
-    let s = text.replace(/[•🟢⚡✅🔊🤖🗣️📞📈🔥📋\*`_#]/g, "");
-    s = s.replace(/\b(0?[1-9]|[12]\d|3[01])[./](0?[1-9]|1[0-2])(?:\.202\d)?\b/g, (m, d, mo) => {
-      const di = parseInt(d, 10), mi = parseInt(mo, 10);
-      if (daysGen[di] && monthsGen[mi]) return daysGen[di] + " " + monthsGen[mi];
-      return m;
-    });
-    s = s.replace(/(\d)\s+(\d{3})\b/g, "$1$2");
-    s = s.replace(/\bffmpegi\b/gi, "procesy wideo")
-      .replace(/\bffmpeg\b/gi, "proces wideo")
-      .replace(/\bprofit\s*sheet\b/gi, "profit szit")
-      .replace(/\badloc\b/gi, "ad-lok")
-      .replace(/\bstudiodermal\b/gi, "studio dermal")
-      .replace(/\bischgl\b/gi, "iszgl")
-      .replace(/\bval\s*thorens\b/gi, "wal torans")
-      .replace(/\bUK\b/g, "ju-kej")
-      .replace(/\bMSL\b/g, "em-es-el")
-      .replace(/%/g, " procent")
-      .replace(/PLN|zł/gi, " złotych");
-    s = s.replace(/(\d+)[,.](\d+)/g, (_, a, b) => polishNumToWords(parseInt(a, 10)) + " przecinek " + polishNumToWords(parseInt(b, 10)));
-    s = s.replace(/\b\d+\b/g, (m) => polishNumToWords(parseInt(m, 10)));
-    return s.trim();
-  }
-
-  function updateActionUI() {
-    if (!inCall) {
-      sendNowBtn.className = "send-now-btn disabled";
-      sendNowBtn.textContent = "📞 Kliknij zieloną słuchawkę poniżej";
-      return;
-    }
-    if (mode === "listening") {
-      sendNowBtn.className = "send-now-btn";
-      sendNowBtn.textContent = "✅ Skończyłem mówić — Wyślij teraz (lub Spacja)";
-      orbIcon.textContent = "🎙️";
-      orbSub.textContent = "WYŚLIJ";
-      hintEl.textContent = SEND_MODE === "manual"
-        ? "Tryb bez zakłóceń: mów dowolnie długo i kliknij zielony przycisk (lub Spację), by wysłać."
-        : "Tryb auto: wyśle po ciszy lub od razu po kliknięciu zielonego przycisku.";
-    } else if (mode === "thinking") {
-      sendNowBtn.className = "send-now-btn disabled";
-      sendNowBtn.textContent = "⚡ Jarvis przygotowuje odpowiedź...";
-      orbIcon.textContent = "⚡";
-      orbSub.textContent = "MYŚLĘ";
-    } else if (mode === "speaking") {
-      sendNowBtn.className = "send-now-btn interrupt";
-      sendNowBtn.textContent = "✋ Przerwij Jarvisowi i mów teraz";
-      orbIcon.textContent = "🔊";
-      orbSub.textContent = "PRZERWIJ";
+function updateStatusUI() {
+  if (!callActive) return;
+  if (state === "listening") {
+    if (listenMode === "auto") {
+      setUIState("listening", "Słucham Cię...", "Mów swobodnie — wyślę automatycznie po krótkiej pauzie (lub dotknij kuli)", "🎙️", "Mów (lub dotknij, by wysłać)");
+    } else {
+      setUIState("listening", "Słucham (Tryb Głośna Ulica)", "Mów swobodnie, a gdy skończysz — dotknij kuli na środku ekranu", "🎙️", "Dotknij kuli, gdy skończysz");
     }
   }
+}
 
-  function setMode(m, label) {
-    mode = m;
-    document.body.className = m;
-    stateEl.textContent = label;
-    if (thinkingTimer) {
-      clearTimeout(thinkingTimer);
-      thinkingTimer = null;
-    }
-    if (m === "thinking") {
-      thinkingTimer = setTimeout(() => {
-        if (inCall && mode === "thinking") startListeningTurn();
-      }, 9000);
-    }
-    updateActionUI();
+function handleOrbTap() {
+  if (!callActive) {
+    startCall();
+    return;
+  }
+  if (state === "speaking") {
+    stopJarvisAudio();
+    startRecordingUtterance();
+    return;
+  }
+  if (state === "listening" || state === "speaking-user") {
+    finishTurnAndSend();
+  }
+}
+
+window.addEventListener("keydown", (e) => {
+  if ((e.code === "Space" || e.code === "Enter") && callActive && (state === "listening" || state === "speaking-user")) {
+    e.preventDefault();
+    finishTurnAndSend();
+  }
+});
+
+function stopJarvisAudio() {
+  ttsQueue = [];
+  isPlayingQueue = false;
+  if (currentAudio) {
+    try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {}
+    currentAudio = null;
+  }
+}
+
+function playReadyChime() {
+  try {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(540, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(780, audioCtx.currentTime + 0.11);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.13);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.14);
+  } catch (e) {}
+}
+
+// Konwersja liczb na polski zapis słowny TYLKO dla syntezatora głosu (na ekranie zostają normalne cyfry)
+function formatNumbersForPolishTTS(text) {
+  if (!text) return "";
+  let s = text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[*_#`~>]/g, "")
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+    .replace(/\bPLN\b/gi, "złotych")
+    .replace(/\bzł\b/gi, "złotych")
+    .replace(/\bEUR\b/gi, "euro")
+    .replace(/\bGBP\b/gi, "funtów")
+    .replace(/\bUSD\b/gi, "dolarów")
+    .replace(/\bROAS\b/gi, "roas")
+    .replace(/%/g, " procent");
+  return s.trim();
+}
+
+function enqueueSpeak(text) {
+  const clean = formatNumbersForPolishTTS(text);
+  if (!clean) return;
+  ttsQueue.push(clean);
+  if (!isPlayingQueue) processTtsQueue();
+}
+
+async function processTtsQueue() {
+  if (isPlayingQueue || ttsQueue.length === 0) return;
+  isPlayingQueue = true;
+
+  while (ttsQueue.length > 0 && callActive) {
+    const chunkText = ttsQueue.shift();
+    setUIState("speaking", "Jarvis mówi...", "Dotknij kuli na środku, jeśli chcesz mu przerwać", "🔊", "Dotknij, by przerwać");
+    await speakSingleChunk(chunkText);
   }
 
-  function updateTimer() {
-    if (!inCall) return;
-    const sec = Math.floor((Date.now() - callStartTime) / 1000);
-    const mm = String(Math.floor(sec / 60)).padStart(2, "0");
-    const ss = String(sec % 60).padStart(2, "0");
-    timerEl.textContent = mm + ":" + ss;
+  isPlayingQueue = false;
+  if (callActive && state === "speaking") {
+    startRecordingUtterance();
   }
+}
 
-  let speechQueue = [];
-
-  async function speakText(text) {
-    if (!inCall || !text) return;
-    const now = Date.now();
-    if (text === lastSpokenMsg && now - lastSpokenAt < 4000) return;
-    lastSpokenMsg = text;
-    lastSpokenAt = now;
-
-    if (mode === "speaking" && currentAudio && !currentAudio.paused) {
-      speechQueue.push(text);
-      return;
-    }
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      try { mediaRecorder.onstop = null; mediaRecorder.stop(); } catch (e) {}
-    }
-    setMode("speaking", "Jarvis mówi...");
-    liveEl.textContent = "🤖 " + text;
-
-    try {
-      const ttsInput = cleanTextForPolishTTS(text);
-      const url = "https://api.elevenlabs.io/v1/text-to-speech/" + VOICE_ID + "/stream?output_format=mp3_44100_128&optimize_streaming_latency=4";
-      const resp = await fetch(url, {
+async function speakSingleChunk(text) {
+  try {
+    const res = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${currentVoiceId}/stream?output_format=mp3_44100_128&optimize_streaming_latency=4`,
+      {
         method: "POST",
-        headers: {
-          "xi-api-key": EL_KEY,
-          "Content-Type": "application/json"
-        },
+        headers: { "xi-api-key": _ek, "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: ttsInput,
+          text: text,
           model_id: "eleven_flash_v2_5",
           language_code: "pl",
-          voice_settings: { stability: 0.55, similarity_boost: 0.78, style: 0.0, use_speaker_boost: true, speed: 1.00 }
+          voice_settings: {
+            stability: 0.58,
+            similarity_boost: 0.80,
+            style: 0.0,
+            use_speaker_boost: true,
+            speed: 1.02
+          }
         })
-      });
-      if (!inCall || mode !== "speaking") return;
-      const blob = await resp.blob();
-      const audioUrl = URL.createObjectURL(blob);
-      if (currentAudio) {
-        currentAudio.pause();
       }
-      currentAudio = new Audio(audioUrl);
-      currentAudio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-        if (speechQueue.length > 0) {
-          const nextMsg = speechQueue.shift();
-          currentAudio = null;
-          speakText(nextMsg);
-          return;
-        }
-        setTimeout(() => {
-          if (inCall && mode === "speaking") startListeningTurn();
-        }, 180);
-      };
-      currentAudio.onerror = () => {
-        if (inCall) startListeningTurn();
-      };
-      await currentAudio.play();
-    } catch (e) {
-      if (inCall) startListeningTurn();
-    }
+    );
+    if (!res.ok) throw new Error("TTS HTTP " + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    await new Promise((resolve) => {
+      currentAudio = new Audio(url);
+      currentAudio.onended = () => { URL.revokeObjectURL(url); currentAudio = null; resolve(); };
+      currentAudio.onerror = () => { URL.revokeObjectURL(url); currentAudio = null; resolve(); };
+      currentAudio.play().catch(() => resolve());
+    });
+  } catch (e) {
+    console.error("TTS error:", e);
   }
+}
 
-  function connectSSE() {
-    if (sse) sse.close();
-    sse = new EventSource("https://ntfy.sh/" + OUT_TOPIC + "/sse");
-    sse.onmessage = (ev) => {
-      if (!inCall) return;
-      try {
-        const data = JSON.parse(ev.data);
-        if (data.event === "message" && data.message) {
-          speakText(data.message);
-        }
-      } catch (e) {}
-    };
+function connectReplyStream() {
+  if (sseOut) sseOut.close();
+  sseOut = new EventSource(`https://ntfy.sh/${NTFY_OUT}/sse`);
+  sseOut.onmessage = async (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      if (data.event !== "message" || !data.message) return;
+      if (data.time && data.time < activeTurnStartTs - 5) return;
+
+      let msgText = data.message.trim();
+      if (!msgText) return;
+
+      if (msgText.startsWith("{") && msgText.endsWith("}")) {
+        try {
+          const parsed = JSON.parse(msgText);
+          if (parsed.turn_id && spokenTurnIds.has(parsed.turn_id + "_" + (parsed.part || "full"))) return;
+          if (parsed.turn_id) spokenTurnIds.add(parsed.turn_id + "_" + (parsed.part || "full"));
+
+          // Na ekranie pokazujemy tekst z normalnymi cyframi (display_text lub text)
+          const screenText = parsed.display_text || parsed.text || "";
+          const audioText = parsed.tts_text || parsed.text || "";
+
+          if (parsed.part === "first") {
+            document.getElementById("jarvisText").innerText = "Jarvis: " + screenText + "...";
+            enqueueSpeak(audioText);
+            return;
+          } else if (parsed.part === "rest") {
+            if (parsed.full_text) {
+              document.getElementById("jarvisText").innerText = "Jarvis: " + parsed.full_text;
+            }
+            if (audioText) enqueueSpeak(audioText);
+            return;
+          } else if (parsed.part === "full") {
+            document.getElementById("jarvisText").innerText = "Jarvis: " + screenText;
+            enqueueSpeak(audioText);
+            return;
+          }
+        } catch(e) {}
+      }
+
+      if (spokenTurnIds.has( data.id )) return;
+      spokenTurnIds.add(data.id);
+      document.getElementById("jarvisText").innerText = "Jarvis: " + msgText;
+      enqueueSpeak(msgText);
+    } catch (e) {}
+  };
+}
+
+async function startCall() {
+  if (callActive) return;
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1
+      }
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(micStream);
+
+    // 3-stopniowy filtr pasmowy ludzkiej mowy (300 Hz - 3400 Hz)
+    // Wycina całkowicie kroki, wiatr, stuknięcia i szum ulicy przed analizatorem VAD!
+    const hpFilter = audioCtx.createBiquadFilter();
+    hpFilter.type = "highpass";
+    hpFilter.frequency.value = 300;
+    hpFilter.Q.value = 0.707;
+
+    const lpFilter = audioCtx.createBiquadFilter();
+    lpFilter.type = "lowpass";
+    lpFilter.frequency.value = 3400;
+    lpFilter.Q.value = 0.707;
+
+    const formantBoost = audioCtx.createBiquadFilter();
+    formantBoost.type = "peaking";
+    formantBoost.frequency.value = 1350;
+    formantBoost.gain.value = 3.0;
+    formantBoost.Q.value = 1.0;
+
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.35;
+
+    src.connect(hpFilter);
+    hpFilter.connect(lpFilter);
+    lpFilter.connect(formantBoost);
+    formantBoost.connect(analyser);
+
+    callActive = true;
+    activeTurnStartTs = Math.floor(Date.now() / 1000);
+    connectReplyStream();
+    monitorVoiceLoop();
+    playReadyChime();
+    startRecordingUtterance();
+  } catch (err) {
+    setUIState("idle", "Brak dostępu do mikrofonu", "Zezwól na mikrofon w Telegramie i dotknij kuli", "⚠️", "Spróbuj ponownie");
   }
+}
 
-  // Czarna lista halucynacji Scribe przy szumie otoczenia
-  const NOISE_HALLUCINATIONS = new Set([
-    "dziękuję", "dziekuje", "dzięki", "napisy", "muzyka", "cisza", "szum", "he", "hm", "hmm", "yyy", "eee", "aaa", "o", "a", "i", "w", "z"
-  ]);
+function startRecordingUtterance() {
+  if (!callActive || isMuted) return;
+  allChunks = [];
+  sustainedSpeechFrames = 0;
+  speechConfirmed = false;
+  speechConfirmedAt = 0;
+  silenceSince = 0;
+  peakVoiceRms = 0;
 
-  async function processRecordedBlob(blob, mime) {
-    if (!inCall || blob.size < 900) {
-      if (inCall) startListeningTurn();
+  updateStatusUI();
+
+  const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+    ? "audio/webm;codecs=opus"
+    : (MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "");
+  mediaRecorder = mime ? new MediaRecorder(micStream, { mimeType: mime }) : new MediaRecorder(micStream);
+
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data && e.data.size > 0) allChunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = async () => {
+    if (!callActive) return;
+    if (allChunks.length === 0) {
+      if (state === "listening" || state === "speaking-user") startRecordingUtterance();
       return;
     }
-    setMode("thinking", "Rozpoznaję mowę...");
-    try {
-      let ext = "webm";
-      if (mime.includes("mp4") || mime.includes("aac") || mime.includes("m4a")) ext = "mp4";
-      else if (mime.includes("ogg")) ext = "ogg";
-      else if (mime.includes("wav")) ext = "wav";
-
-      const fd = new FormData();
-      fd.append("model_id", "scribe_v1");
-      fd.append("language_code", "pl");
-      fd.append("tag_audio_events", "false");
-      fd.append("file", blob, "voice." + ext);
-
-      const ctrl = new AbortController();
-      const tId = setTimeout(() => ctrl.abort(), 5000);
-      const r = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
-        method: "POST",
-        headers: { "xi-api-key": EL_KEY },
-        body: fd,
-        signal: ctrl.signal
-      });
-      clearTimeout(tId);
-      const j = await r.json();
-      let txt = (j.text || "").replace(/\([^)]*\)/g, "").replace(/\[[^\]]*\]/g, "").trim();
-      const cleanLow = txt.toLowerCase().replace(/[.!,?…]/g, "").trim();
-      const lettersOnly = txt.replace(/[^a-ząćęłńóśźżA-ZĄĆĘŁŃÓŚŹŻ]/g, "");
-      if (!txt || lettersOnly.length < 3 || NOISE_HALLUCINATIONS.has(cleanLow)) {
-        liveEl.textContent = "🎙️ Nie wykryto wyraźnego zdania — mów śmiało i kliknij Wyślij.";
-        if (inCall) startListeningTurn();
-        return;
-      }
-
-      liveEl.textContent = "🗣️ Ty: „" + txt + "”";
-      setMode("thinking", "Jarvis odpowiada...");
-      await fetch("https://ntfy.sh/" + IN_TOPIC, {
-        method: "POST",
-        body: txt
-      });
-    } catch (e) {
-      if (inCall) startListeningTurn();
+    const actualMime = mediaRecorder.mimeType || "audio/webm";
+    const ext = actualMime.includes("mp4") ? "mp4" : "webm";
+    const blob = new Blob(allChunks, { type: actualMime });
+    if (blob.size < 900) {
+      if (callActive) startRecordingUtterance();
+      return;
     }
+    await transcribeAndSend(blob, ext);
+  };
+
+  mediaRecorder.start(100);
+}
+
+function finishTurnAndSend() {
+  if (!callActive) return;
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    speechConfirmed = true;
+    mediaRecorder.stop();
   }
+}
 
-  function getSupportedMimeType() {
-    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
-    for (const t of types) {
-      if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
-        return t;
-      }
+// Pętla detekcji ludzkiej mowy (Voice Bandpass 300-3400 Hz + Adaptive Noise Floor + Continuous Cadence Gate)
+function monitorVoiceLoop() {
+  if (!callActive) return;
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+
+  const tick = () => {
+    if (!callActive) return;
+    analyser.getByteTimeDomainData(buf);
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) {
+      const v = (buf[i] - 128) / 128;
+      sum += v * v;
     }
-    return "";
-  }
+    const voiceRms = Math.sqrt(sum / buf.length);
 
-  function startListeningTurn() {
-    if (!inCall || !mediaStream) return;
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
-    setMode("listening", isMuted ? "Mikrofon wyciszony" : "🎙️ Mów śmiało — kliknij zielony przycisk gdy skończysz");
-    allChunks = [];
-    speechStartChunkIdx = 0;
-    speakingDetected = false;
-    voiceFrames = 0;
-    silenceStart = 0;
-    speechStart = 0;
-    peakVoice = noiseFloor + 20;
+    const s1 = 1 + Math.min(voiceRms * 3.0, 0.42);
+    const s2 = 1 + Math.min(voiceRms * 5.0, 0.70);
+    document.getElementById("ring1").style.transform = `scale(${s1})`;
+    document.getElementById("ring2").style.transform = `scale(${s2})`;
 
-    const mime = getSupportedMimeType();
-    try {
-      const opts = mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 };
-      mediaRecorder = new MediaRecorder(mediaStream, opts);
-    } catch (e) {
-      mediaRecorder = new MediaRecorder(mediaStream);
-    }
-    const actualMime = mediaRecorder.mimeType || mime || "audio/mp4";
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) {
-        allChunks.push(e.data);
-      }
-    };
-    mediaRecorder.onstop = () => {
-      if (!inCall || mode !== "listening") return;
-      // NIGDY nie wycinaj środkowych chunków z kontenera WebM/MP4, bo to uszkadza strumień audio dla Scribe!
-      const blob = new Blob(allChunks, { type: actualMime });
-      processRecordedBlob(blob, actualMime);
-    };
-    mediaRecorder.start(200);
-  }
+    const now = performance.now();
 
-  function triggerSendOrInterrupt() {
-    if (!inCall) return;
-    if (mode === "speaking") {
-      speechQueue = [];
-      if (currentAudio) currentAudio.pause();
-      startListeningTurn();
-    } else if (mode === "listening" && mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-    } else if (mode === "thinking") {
-      startListeningTurn();
-    }
-  }
+    if ((state === "listening" || state === "speaking-user") && !isMuted) {
+      // Dynamiczny próg powyżej tła (minimum 0.028, żeby odciąć kroki i szum ulicy)
+      const dynamicThreshold = Math.max(0.028, Math.min(0.065, noiseFloor * 2.5));
 
-  orbWrap.addEventListener("click", triggerSendOrInterrupt);
-  sendNowBtn.addEventListener("click", triggerSendOrInterrupt);
+      if (voiceRms > dynamicThreshold) {
+        sustainedSpeechFrames++;
+        silenceSince = 0;
+        if (voiceRms > peakVoiceRms) peakVoiceRms = voiceRms;
 
-  // Obsługa Spacji / Entera na komputerze Mac
-  window.addEventListener("keydown", (e) => {
-    if (!inCall) return;
-    if (e.code === "Space" || e.code === "Enter") {
-      e.preventDefault();
-      triggerSendOrInterrupt();
-    }
-  });
-
-  async function startCall() {
-    try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-      });
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const src = audioCtx.createMediaStreamSource(mediaStream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512;
-      src.connect(analyser);
-      const dataArr = new Uint8Array(analyser.frequencyBinCount);
-
-      inCall = true;
-      callStartTime = Date.now();
-      callBtn.className = "btn btn-end";
-      callBtn.textContent = "📵";
-      muteBtn.style.display = "flex";
-      timerInterval = setInterval(updateTimer, 1000);
-
-      connectSSE();
-      playReadyBeep();
-      startListeningTurn();
-
-      vadInterval = setInterval(() => {
-        if (!inCall || isMuted || mode !== "listening") {
-          orbRing.style.transform = "scale(1)";
-          return;
+        // Wymagamy co najmniej ~360ms ciągłego pasma ludzkiego głosu (odrzuca stuknięcia, kroki, chrząknięcia)
+        if (sustainedSpeechFrames >= 5 && !speechConfirmed) {
+          speechConfirmed = true;
+          speechConfirmedAt = now;
+          setUIState("speaking-user", "Słyszę Cię — mów dalej...", "Po krótkiej pauzie wyślę automatycznie (lub dotknij kuli)", "🗣️", "Dotknij, by wysłać od razu");
         }
-        analyser.getByteFrequencyData(dataArr);
-        // Tylko pasmo ludzkiego głosu (ok. 350Hz - 2800Hz, odcięty niski szum wentylatorów Maca!)
-        let vocalSum = 0;
-        for (let i = 5; i <= 28; i++) vocalSum += dataArr[i];
-        const vocalAvg = vocalSum / 24;
-
-        const scale = Math.min(1.72, 1 + Math.max(0, vocalAvg - noiseFloor) / 55);
-        orbRing.style.transform = "scale(" + scale.toFixed(2) + ")";
-
-        const now = Date.now();
-
-        if (!speakingDetected) {
-          if (vocalAvg < noiseFloor + 15) {
-            noiseFloor = noiseFloor * 0.93 + vocalAvg * 0.07;
-          } else {
-            noiseFloor = noiseFloor * 0.992 + vocalAvg * 0.008;
-          }
-          noiseFloor = Math.max(12, Math.min(68, noiseFloor));
-
-          // Zapisz punkt startu mowy żeby uciąć wcześniejszą ciszę
-          if (vocalAvg > noiseFloor + 18) {
-            voiceFrames++;
-            if (voiceFrames >= 5) {
-              speakingDetected = true;
-              speechStart = now - 200;
-              silenceStart = now;
-              peakVoice = vocalAvg;
-              speechStartChunkIdx = Math.max(0, allChunks.length - 3);
-            }
-          } else {
-            voiceFrames = Math.max(0, voiceFrames - 1);
-          }
-        } else {
-          if (vocalAvg > peakVoice) {
-            peakVoice = peakVoice * 0.6 + vocalAvg * 0.4;
-          }
-          // Tylko jeśli użytkownik ręcznie przełączył na tryb "Auto po ciszy"
-          if (SEND_MODE === "auto") {
-            const dynamicContinueThreshold = Math.max(
-              noiseFloor + 14,
-              noiseFloor + (peakVoice - noiseFloor) * 0.48
-            );
-            if (vocalAvg > dynamicContinueThreshold) {
-              silenceStart = now;
-            } else {
-              const silenceDur = now - silenceStart;
-              const spokenDur = silenceStart - speechStart;
-              if (spokenDur >= 450 && silenceDur > 750) {
-                speakingDetected = false;
-                voiceFrames = 0;
-                if (mediaRecorder && mediaRecorder.state === "recording") {
-                  mediaRecorder.stop();
-                }
-              } else if (spokenDur < 450 && silenceDur > 600) {
-                speakingDetected = false;
-                voiceFrames = 0;
-              }
-            }
+      } else {
+        // Aktualizuj poziom tła tylko gdy nie mówimy
+        if (!speechConfirmed) {
+          sustainedSpeechFrames = Math.max(0, sustainedSpeechFrames - 1);
+          noiseFloor = noiseFloor * 0.96 + voiceRms * 0.04;
+        } else if (listenMode === "auto") {
+          if (!silenceSince) silenceSince = now;
+          const silenceDuration = now - silenceSince;
+          // Automatyczna wysyłka po 950ms ciszy od zakończenia wyraźnej wypowiedzi
+          if (silenceDuration > 950 && mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
           }
         }
-      }, 40);
-    } catch (err) {
-      stateEl.textContent = "Kliknij zieloną słuchawkę poniżej";
-      liveEl.textContent = "Dotknij zielonej słuchawki, żeby włączyć mikrofon.";
+      }
     }
+
+    setTimeout(tick, 75);
+  };
+  tick();
+}
+
+// Odfiltrowuje halucynacje szumu z modelu STT (np. "(szum)", "(kroki)", pojedyncze litery)
+function isNoiseHallucination(txt) {
+  if (!txt) return true;
+  const clean = txt.replace(/[\(\[\*].*?[\)\]\*]/g, "").replace(/[^\p{L}\p{N}]/gu, "").trim();
+  if (clean.length < 2) return true;
+  const lower = txt.toLowerCase().trim();
+  const noisePhrases = [
+    "dziękuję za uwagę", "napisy stworzone przez", "subskrybuj", "muzyka", "szum", "cisza", "westchnienie"
+  ];
+  if (noisePhrases.includes(lower)) return true;
+  return false;
+}
+
+async function transcribeAndSend(audioBlob, ext) {
+  setUIState("thinking", "Rozpoznaję i wykonuję...", "Przekazuję bezpośrednio do Antigravity Argon", "⚡", "Przetwarzam...");
+  try {
+    const fd = new FormData();
+    fd.append("model_id", "scribe_v1");
+    fd.append("language_code", "pl");
+    fd.append("tag_audio_events", "false");
+    fd.append("file", audioBlob, `speech.${ext || "webm"}`);
+
+    const sttRes = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+      method: "POST",
+      headers: { "xi-api-key": _ek },
+      body: fd
+    });
+
+    if (!sttRes.ok) throw new Error("STT HTTP " + sttRes.status);
+    const sttData = await sttRes.json();
+    const userText = (sttData.text || "").trim();
+
+    if (isNoiseHallucination(userText)) {
+      if (callActive) startRecordingUtterance();
+      return;
+    }
+
+    document.getElementById("youText").innerText = "Ty: " + userText;
+    document.getElementById("jarvisText").innerText = "Jarvis: (pracuję nad odpowiedzią w Antigravity...)";
+    activeTurnStartTs = Math.floor(Date.now() / 1000);
+
+    await fetch(`https://ntfy.sh/${NTFY_IN}`, {
+      method: "POST",
+      body: JSON.stringify({
+        type: "voice_call_turn",
+        text: userText,
+        ts: Date.now()
+      })
+    });
+  } catch (e) {
+    console.error("STT error:", e);
+    if (callActive) startRecordingUtterance();
   }
+}
 
-  function endCall() {
-    inCall = false;
-    setMode("idle", "Rozłączono");
-    if (timerInterval) clearInterval(timerInterval);
-    if (vadInterval) clearInterval(vadInterval);
-    if (sse) sse.close();
-    if (currentAudio) currentAudio.pause();
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      try { mediaRecorder.onstop = null; mediaRecorder.stop(); } catch (e) {}
-    }
-    if (mediaStream) {
-      mediaStream.getTracks().forEach(t => t.stop());
-    }
-    callBtn.className = "btn btn-start";
-    callBtn.textContent = "📞";
-    muteBtn.style.display = "none";
+function toggleMute() {
+  isMuted = !isMuted;
+  const btn = document.getElementById("muteBtn");
+  if (isMuted) {
+    btn.innerText = "🔇 Włącz mikrofon";
+    setUIState("idle", "Mikrofon wyciszony", "Dotknij Włącz mikrofon, aby kontynuować", "🔇", "Wyciszony");
+    if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+  } else {
+    btn.innerText = "🎤 Wycisz mikrofon";
+    startRecordingUtterance();
   }
+}
 
-  callBtn.addEventListener("click", () => {
-    if (!inCall) startCall();
-    else endCall();
-  });
+function endCall() {
+  callActive = false;
+  if (sseOut) sseOut.close();
+  stopJarvisAudio();
+  if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  setUIState("idle", "Rozmowa zakończona", "Dotknij kuli, aby połączyć ponownie", "📞", "Dotknij, by połączyć");
+  if (tg) setTimeout(() => tg.close(), 350);
+}
 
-  muteBtn.addEventListener("click", () => {
-    isMuted = !isMuted;
-    muteBtn.classList.toggle("muted", isMuted);
-    muteBtn.textContent = isMuted ? "🔇" : "🎤";
-    if (mode === "listening") {
-      stateEl.textContent = isMuted ? "Mikrofon wyciszony" : "🎙️ Mów śmiało — kliknij zielony przycisk gdy skończysz";
-    }
-  });
-
-  setTimeout(() => {
-    if (!inCall) startCall();
-  }, 100);
-})();
+window.addEventListener("load", () => {
+  setTimeout(startCall, 200);
+});
 </script>
 </body>
 </html>
